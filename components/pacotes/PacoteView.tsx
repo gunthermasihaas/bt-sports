@@ -16,7 +16,6 @@ type Props = {
   descricao?: string;
   preco?: number;
   capaUrl?: string;
-  galeria: { url: string; tipo: string }[];
 };
 
 export default function PacoteView({
@@ -28,7 +27,6 @@ export default function PacoteView({
   descricao,
   preco,
   capaUrl,
-  galeria,
 }: Props) {
   return (
     <div className="bg-surface px-4 py-8 sm:px-6 sm:py-10">

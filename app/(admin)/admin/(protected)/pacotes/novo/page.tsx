@@ -5,8 +5,9 @@ import InformacoesBasicas from "@/components/pacotes/novos/InformacoesBasicas";
 import ImagensPacote from "@/components/pacotes/novos/ImagensPacote";
 import ConteudoPacote from "@/components/pacotes/novos/ConteudoPacote";
 import StickyActions from "@/components/pacotes/novos/StickyActions";
+import PacoteView from "@/components/pacotes/PacoteView";
+import { PacoteFormState } from "@/types/pacoteForm";
 import { toast } from "sonner";
-import { set } from "zod";
 
 type Categoria = {
   id: number;
@@ -18,17 +19,21 @@ export default function NovoPacotePage() {
   const [loadingMessage, setLoadingMessage] = useState("");
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState<number | "">(
-    ""
-  );
-  const [criandoCategoria, setCriandoCategoria] = useState(false);
-  const [novaCategoria, setNovaCategoria] = useState("");
-
   const [fotoCapa, setFotoCapa] = useState<File | null>(null);
   const [fotoBanner, setFotoBanner] = useState<File | null>(null);
   const [fotoCard, setFotoCard] = useState<File | null>(null);
 
-  const [descricao, setDescricao] = useState("");
+  const [formData, setFormData] = useState<PacoteFormState>({
+    nome: "",
+    categoria_id: "",
+    data_inicio: "",
+    preco: 0,
+    moeda: "EUR",
+    texto_destaque: "",
+    resumo: "",
+    descricao: "",
+    destaque: false,
+  });
 
   useEffect(() => {
     fetch("/api/admin/categorias-viagem")
@@ -37,6 +42,16 @@ export default function NovoPacotePage() {
       .catch(() => toast.error("Erro ao carregar categorias"));
   }, []);
 
+  function updateField<K extends keyof PacoteFormState>(
+    key: K,
+    value: PacoteFormState[K]
+  ) {
+    setFormData((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -44,24 +59,12 @@ export default function NovoPacotePage() {
       setLoading(true);
       setLoadingMessage("Criando pacote...");
 
-      const form = e.target as HTMLFormElement;
-      const formData = new FormData(form);
-
-      const payload = {
-        nome: formData.get("nome"),
-        categoria_id: categoriaSelecionada,
-        data_inicio: formData.get("data_inicio") || undefined,
-        preco: Number(formData.get("preco")),
-        resumo: formData.get("resumo") || undefined,
-        texto_destaque: formData.get("texto_destaque") || undefined,
-        descricao,
-        destaque: formData.get("destaque") === "on",
-      };
-
       const res = await fetch("/api/admin/pacotes", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
 
       if (!res.ok) throw new Error("Erro ao criar pacote");
@@ -96,24 +99,31 @@ export default function NovoPacotePage() {
     }
   }
 
+  const categoriaAtual = categorias.find((c) => c.id === formData.categoria_id);
+
   return (
     <div className="bg-admin min-h-screen">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
+      <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 sm:px-6 sm:py-10">
         <h1 className="text-xl sm:text-2xl font-semibold text-admin">
           Criar novo pacote
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
           <InformacoesBasicas
             categorias={categorias}
             setCategorias={setCategorias}
-            categoriaSelecionada={categoriaSelecionada}
-            setCategoriaSelecionada={setCategoriaSelecionada}
-            criandoCategoria={criandoCategoria}
-            setCriandoCategoria={setCriandoCategoria}
-            novaCategoria={novaCategoria}
-            setNovaCategoria={setNovaCategoria}
+            categoriaSelecionada={formData.categoria_id}
+            onCategoriaChange={(value) => updateField("categoria_id", value)}
+            valores={{
+              nome: formData.nome,
+              data_inicio: formData.data_inicio,
+              preco: formData.preco,
+              moeda: formData.moeda,
+              destaque: formData.destaque,
+            }}
+            onChange={updateField}
           />
+
           <ImagensPacote
             fotoCapa={fotoCapa}
             setFotoCapa={setFotoCapa}
@@ -122,7 +132,34 @@ export default function NovoPacotePage() {
             fotoBanner={fotoBanner}
             setFotoBanner={setFotoBanner}
           />
-          <ConteudoPacote descricao={descricao} setDescricao={setDescricao} />
+
+          <ConteudoPacote
+            valores={{
+              texto_destaque: formData.texto_destaque,
+              resumo: formData.resumo,
+              descricao: formData.descricao,
+            }}
+            onChange={updateField}
+          />
+
+          <div className="rounded-xl border border-default overflow-hidden">
+            <PacoteView
+              nome={formData.nome || "Nome do pacote"}
+              categoria={
+                categoriaAtual ? { nome: categoriaAtual.nome } : undefined
+              }
+              data_inicio={
+                formData.data_inicio
+                  ? new Date(formData.data_inicio)
+                  : undefined
+              }
+              texto_destaque={formData.texto_destaque}
+              resumo={formData.resumo}
+              descricao={formData.descricao}
+              preco={formData.preco}
+              capaUrl={fotoCapa ? URL.createObjectURL(fotoCapa) : undefined}
+            />
+          </div>
 
           <StickyActions
             loading={loading}

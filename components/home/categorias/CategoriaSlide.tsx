@@ -16,7 +16,7 @@ export default function CategoriaSlide({ slug, nome }: Props) {
         items-center
       "
     >
-      <CategoriaButton href={`/categoria/${slug}`} label={nome} />
+      <CategoriaButton href={`/categorias/${slug}`} label={nome} />
     </div>
   );
 }

@@ -26,6 +26,8 @@ type PacoteEditavel = {
   descricao: string;
   destaque: boolean;
   capaUrl?: string;
+  cardUrl?: string;
+  bannerUrl?: string;
 };
 
 type Props = {
@@ -122,25 +124,6 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
           Editar pacote
         </h1>
 
-        {/* PREVIEW */}
-        <div className="rounded-xl border border-default overflow-hidden">
-          <PacoteView
-            nome={formData.nome}
-            categoria={
-              categoriaAtual ? { nome: categoriaAtual.nome } : undefined
-            }
-            data_inicio={
-              formData.data_inicio ? new Date(formData.data_inicio) : undefined
-            }
-            texto_destaque={formData.texto_destaque}
-            resumo={formData.resumo}
-            descricao={formData.descricao}
-            preco={formData.preco}
-            capaUrl={pacote.capaUrl}
-          />
-        </div>
-
-        {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-8">
           <InformacoesBasicas
             categorias={listaCategorias}
@@ -173,6 +156,21 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
             onDelete={() => setShowDeleteModal(true)}
           />
         </form>
+      </div>
+
+      <div className="rounded-xl border border-default overflow-hidden">
+        <PacoteView
+          nome={formData.nome}
+          categoria={categoriaAtual ? { nome: categoriaAtual.nome } : undefined}
+          data_inicio={
+            formData.data_inicio ? new Date(formData.data_inicio) : undefined
+          }
+          texto_destaque={formData.texto_destaque}
+          resumo={formData.resumo}
+          descricao={formData.descricao}
+          preco={formData.preco}
+          capaUrl={pacote.capaUrl}
+        />
       </div>
 
       <ConfirmModal

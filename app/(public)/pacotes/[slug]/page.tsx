@@ -23,7 +23,7 @@ export default async function PacotePage({ params }: Props) {
   }
 
   const capa = pacote.fotos.find((f) => f.tipo === TipoFoto.CAPA);
-  const galeria = pacote.fotos.filter((f) => f.tipo !== TipoFoto.GALERIA);
+  // const galeria = pacote.fotos.filter((f) => f.tipo !== TipoFoto.GALERIA);
 
   return (
     <PacoteView
@@ -35,7 +35,6 @@ export default async function PacotePage({ params }: Props) {
       descricao={pacote.descricao ?? undefined}
       preco={pacote.preco?.toNumber() ?? undefined}
       capaUrl={capa?.url}
-      galeria={galeria}
     />
   );
 }
