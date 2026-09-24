@@ -81,7 +81,7 @@ export function HeaderShell({
     if (currencyOpen && !usd.current) {
       fetchCurrency();
     }
-  }, [currencyOpen]);
+  }, [currencyOpen, usd.current]);
 
   return (
     <>
@@ -89,11 +89,12 @@ export function HeaderShell({
         <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
           {logo}
 
-          <div className="hidden lg:flex items-center gap-x-6">
+          <div className="hidden items-center gap-x-6 lg:flex">
             {children}
+
             <button
               onClick={() => setCurrencyOpen(true)}
-              className="text-sm font-semibold text-muted text-brand-hover px-3 py-2 rounded-lg hover-brand-soft transition focus-ring-brand"
+              className="rounded-lg px-3 py-2 text-sm font-semibold text-muted text-brand-hover transition hover-brand-soft focus-ring-brand"
             >
               Câmbio
             </button>
@@ -102,7 +103,7 @@ export function HeaderShell({
           <button
             onClick={() => setMenuOpen(true)}
             aria-label="Abrir menu"
-            className="lg:hidden text-muted"
+            className="text-muted lg:hidden"
           >
             ☰
           </button>
@@ -111,12 +112,12 @@ export function HeaderShell({
         <Dialog
           open={menuOpen}
           onClose={setMenuOpen}
-          className="lg:hidden fixed inset-0 z-50"
+          className="fixed inset-0 z-50 lg:hidden"
         >
           <div className="fixed inset-0 bg-black/30" />
 
           <DialogPanel
-            className={`fixed inset-y-0 right-0 w-full sm:max-w-sm p-6 ${bgClass}`}
+            className={`fixed inset-y-0 right-0 w-full p-6 sm:max-w-sm ${bgClass}`}
           >
             {mobileMenu}
 
@@ -126,7 +127,7 @@ export function HeaderShell({
                   setMenuOpen(false);
                   setCurrencyOpen(true);
                 }}
-                className="block text-muted text-brand-hover"
+                className="text-muted text-brand-hover"
               >
                 Câmbio
               </button>
@@ -135,7 +136,7 @@ export function HeaderShell({
             <button
               onClick={() => setMenuOpen(false)}
               aria-label="Fechar menu"
-              className="absolute top-6 right-6"
+              className="absolute right-6 top-6"
             >
               ✕
             </button>

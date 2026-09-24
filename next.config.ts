@@ -1,10 +1,24 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {};
-
-module.exports = {
+const nextConfig: NextConfig = {
   images: {
-    domains: ["images.unsplash.com", "picsum.photos"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+        pathname: "/**",
+      },
+    ],
+  },
+
+  turbopack: {
+    root: process.cwd(),
   },
 };
+
 export default nextConfig;

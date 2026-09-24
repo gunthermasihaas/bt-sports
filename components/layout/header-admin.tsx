@@ -93,6 +93,21 @@ export default function HeaderAdmin() {
               href: "/contato",
               className: "text-sm font-semibold text-muted text-brand-hover",
             },
+            {
+              label: "Dashboard",
+              href: "/admin",
+              className: "block text-admin-hover",
+            },
+            {
+              label: "Usuários",
+              href: "/admin/users",
+              className: "block text-admin-hover",
+            },
+            {
+              label: "Logout",
+              onClick: () => signOut({ callbackUrl: "/admin/login" }),
+              className: "text-sm font-semibold  text-danger text-danger-hover",
+            },
           ]}
         />
       </div>

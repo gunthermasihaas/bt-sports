@@ -21,10 +21,21 @@ export default function UploadImagem({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!value) return setPreviewUrl(null);
+    if (!value) {
+      // A atualização é necessária para limpar a pré-visualização anterior.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPreviewUrl(null);
+      return;
+    }
+
     const url = URL.createObjectURL(value);
+
+    // A pré-visualização depende do Object URL criado para o arquivo.
     setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
   }, [value]);
 
   const aspectClass =
@@ -68,9 +79,11 @@ export default function UploadImagem({
           <span className="text-sm text-admin-muted">
             Arraste uma imagem aqui ou
           </span>
+
           <span className="mt-3 rounded-md bg-brand px-4 py-2 text-sm font-medium text-on-brand">
             Escolher imagem
           </span>
+
           <input
             type="file"
             accept="image/*"

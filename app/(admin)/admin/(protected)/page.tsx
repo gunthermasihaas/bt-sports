@@ -1,5 +1,3 @@
-import { prisma } from "@/lib/prisma";
-
 export default async function AdminDashboard() {
   return (
     <div className="bg-surface p-8">

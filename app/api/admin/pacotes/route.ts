@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { ZodError } from "zod";
 import slugify from "slugify";
+
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/require-admin";
 import { pacoteSchema } from "@/app/(admin)/admin/(protected)/pacotes/novo/schema";
 
 export async function POST(req: Request) {
+  const authorization = await requireAdmin();
+
+  if (!authorization.authorized) {
+    return authorization.response;
+  }
+
   try {
     const body = await req.json();
     const data = pacoteSchema.parse(body);
@@ -13,6 +22,17 @@ export async function POST(req: Request) {
       strict: true,
       trim: true,
     });
+
+    if (!slugBase) {
+      return NextResponse.json(
+        {
+          error: "Não foi possível gerar um slug válido para o pacote",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     let slug = slugBase;
     let count = 1;
@@ -24,33 +44,61 @@ export async function POST(req: Request) {
     const pacote = await prisma.$transaction(async (tx) => {
       if (data.destaque === true) {
         await tx.pacote.updateMany({
-          where: { destaque: true },
-          data: { destaque: false },
+          where: {
+            destaque: true,
+            deleted_at: null,
+          },
+          data: {
+            destaque: false,
+          },
         });
       }
 
       return tx.pacote.create({
         data: {
-          nome: data.nome,
+          nome: data.nome.trim(),
           slug,
           categoria_id: data.categoria_id,
           data_inicio: data.data_inicio ? new Date(data.data_inicio) : null,
           preco: data.preco,
-          texto_destaque: data.texto_destaque,
-          resumo: data.resumo,
-          descricao: data.descricao,
+          texto_destaque: data.texto_destaque ?? null,
+          resumo: data.resumo ?? null,
+          descricao: data.descricao ?? null,
           destaque: data.destaque === true,
         },
       });
     });
 
-    return NextResponse.json({ pacote }, { status: 201 });
+    return NextResponse.json(
+      {
+        pacote,
+      },
+      {
+        status: 201,
+      }
+    );
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          error: "Dados inválidos",
+          details: error.flatten(),
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     console.error("POST /api/admin/pacotes", error);
 
     return NextResponse.json(
-      { error: "Erro ao criar pacote" },
-      { status: 500 }
+      {
+        error: "Erro ao criar pacote",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
