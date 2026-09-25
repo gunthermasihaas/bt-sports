@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 
 import { TipoFoto } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +15,12 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 
 const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "avif"]);
+
+const REPLACEABLE_TYPES = new Set<TipoFoto>([
+  TipoFoto.CAPA,
+  TipoFoto.CARD,
+  TipoFoto.BANNER,
+]);
 
 function getSafeFileName(fileName: string): string {
   const fileNameWithoutPath = fileName.split(/[\\/]/).pop() ?? "";
@@ -66,6 +72,8 @@ export async function POST(req: Request) {
     return authorization.response;
   }
 
+  let uploadedBlobUrl: string | null = null;
+
   try {
     const formData = await req.formData();
 
@@ -74,20 +82,35 @@ export async function POST(req: Request) {
     const pacoteIdRaw = formData.get("pacoteId");
 
     if (!(fileEntry instanceof File)) {
-      return NextResponse.json({ error: "Arquivo inválido" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Arquivo inválido",
+        },
+        {
+          status: 400,
+        }
+      );
     }
 
     if (typeof tipoRaw !== "string" || !tipoRaw.trim()) {
       return NextResponse.json(
-        { error: "Tipo de foto é obrigatório" },
-        { status: 400 }
+        {
+          error: "Tipo de foto é obrigatório",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
     if (typeof pacoteIdRaw !== "string" || !/^\d+$/.test(pacoteIdRaw)) {
       return NextResponse.json(
-        { error: "ID do pacote inválido" },
-        { status: 400 }
+        {
+          error: "ID do pacote inválido",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
@@ -95,8 +118,12 @@ export async function POST(req: Request) {
 
     if (!Number.isSafeInteger(pacoteId) || pacoteId <= 0) {
       return NextResponse.json(
-        { error: "ID do pacote inválido" },
-        { status: 400 }
+        {
+          error: "ID do pacote inválido",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
@@ -104,29 +131,45 @@ export async function POST(req: Request) {
 
     if (!tipo) {
       return NextResponse.json(
-        { error: "Tipo de foto inválido" },
-        { status: 400 }
+        {
+          error: "Tipo de foto inválido",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
     if (fileEntry.size <= 0) {
       return NextResponse.json(
-        { error: "O arquivo está vazio" },
-        { status: 400 }
+        {
+          error: "O arquivo está vazio",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
     if (fileEntry.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "O arquivo excede o limite de 10 MB" },
-        { status: 413 }
+        {
+          error: "O arquivo excede o limite de 10 MB",
+        },
+        {
+          status: 413,
+        }
       );
     }
 
     if (!ALLOWED_MIME_TYPES.has(fileEntry.type.toLowerCase())) {
       return NextResponse.json(
-        { error: "Formato de imagem não permitido" },
-        { status: 400 }
+        {
+          error: "Formato de imagem não permitido",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
@@ -134,8 +177,12 @@ export async function POST(req: Request) {
 
     if (!ALLOWED_EXTENSIONS.has(extension)) {
       return NextResponse.json(
-        { error: "Extensão de arquivo não permitida" },
-        { status: 400 }
+        {
+          error: "Extensão de arquivo não permitida",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
@@ -151,10 +198,30 @@ export async function POST(req: Request) {
 
     if (!pacote || pacote.deleted_at !== null) {
       return NextResponse.json(
-        { error: "Pacote não encontrado" },
-        { status: 404 }
+        {
+          error: "Pacote não encontrado",
+        },
+        {
+          status: 404,
+        }
       );
     }
+
+    const fotoAnterior = REPLACEABLE_TYPES.has(tipo)
+      ? await prisma.foto.findFirst({
+          where: {
+            pacote_id: pacoteId,
+            tipo,
+          },
+          orderBy: {
+            created_at: "desc",
+          },
+          select: {
+            id: true,
+            url: true,
+          },
+        })
+      : null;
 
     const safeFileName = getSafeFileName(fileEntry.name);
     const timestamp = Date.now();
@@ -170,14 +237,39 @@ export async function POST(req: Request) {
       addRandomSuffix: true,
     });
 
+    uploadedBlobUrl = blob.url;
+
     try {
-      const foto = await prisma.foto.create({
-        data: {
-          pacote_id: pacoteId,
-          url: blob.url,
-          tipo,
-        },
+      const foto = await prisma.$transaction(async (tx) => {
+        const novaFoto = await tx.foto.create({
+          data: {
+            pacote_id: pacoteId,
+            url: blob.url,
+            tipo,
+          },
+        });
+
+        if (fotoAnterior) {
+          await tx.foto.delete({
+            where: {
+              id: fotoAnterior.id,
+            },
+          });
+        }
+
+        return novaFoto;
       });
+
+      if (fotoAnterior?.url) {
+        try {
+          await del(fotoAnterior.url);
+        } catch (cleanupError) {
+          console.error(
+            "Erro ao remover Blob anterior:",
+            getErrorMessage(cleanupError)
+          );
+        }
+      }
 
       return NextResponse.json(
         {
@@ -185,7 +277,9 @@ export async function POST(req: Request) {
           foto,
           url: blob.url,
         },
-        { status: 201 }
+        {
+          status: 201,
+        }
       );
     } catch (databaseError) {
       console.error(
@@ -193,21 +287,46 @@ export async function POST(req: Request) {
         getErrorMessage(databaseError)
       );
 
+      try {
+        await del(blob.url);
+      } catch (cleanupError) {
+        console.error(
+          "Erro ao remover Blob órfão:",
+          getErrorMessage(cleanupError)
+        );
+      }
+
       return NextResponse.json(
         {
           error:
             "Imagem enviada, mas não foi possível salvar o registro no banco",
-          url: blob.url,
         },
-        { status: 500 }
+        {
+          status: 500,
+        }
       );
     }
   } catch (error) {
+    if (uploadedBlobUrl) {
+      try {
+        await del(uploadedBlobUrl);
+      } catch (cleanupError) {
+        console.error(
+          "Erro ao remover Blob após falha no upload:",
+          getErrorMessage(cleanupError)
+        );
+      }
+    }
+
     console.error("POST /api/admin/pacotes/upload", getErrorMessage(error));
 
     return NextResponse.json(
-      { error: "Erro no upload da imagem" },
-      { status: 500 }
+      {
+        error: "Erro no upload da imagem",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

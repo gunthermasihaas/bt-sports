@@ -14,6 +14,10 @@ type Categoria = {
   nome: string;
 };
 
+type UploadResponse = {
+  error?: string;
+};
+
 export default function NovoPacotePage() {
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -22,6 +26,9 @@ export default function NovoPacotePage() {
   const [fotoCapa, setFotoCapa] = useState<File | null>(null);
   const [fotoBanner, setFotoBanner] = useState<File | null>(null);
   const [fotoCard, setFotoCard] = useState<File | null>(null);
+  const [capaPreviewUrl, setCapaPreviewUrl] = useState<string | undefined>(
+    undefined
+  );
 
   const [formData, setFormData] = useState<PacoteFormState>({
     nome: "",
@@ -37,10 +44,36 @@ export default function NovoPacotePage() {
 
   useEffect(() => {
     fetch("/api/admin/categorias-viagem")
-      .then((r) => r.json())
-      .then(setCategorias)
-      .catch(() => toast.error("Erro ao carregar categorias"));
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Erro ao carregar categorias");
+        }
+
+        return response.json();
+      })
+      .then((data: Categoria[]) => {
+        setCategorias(data);
+      })
+      .catch((error) => {
+        console.error("Erro ao carregar categorias:", error);
+        toast.error("Erro ao carregar categorias");
+      });
   }, []);
+
+  useEffect(() => {
+    if (!fotoCapa) {
+      setCapaPreviewUrl(undefined);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(fotoCapa);
+
+    setCapaPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [fotoCapa]);
 
   function updateField<K extends keyof PacoteFormState>(
     key: K,
@@ -52,14 +85,50 @@ export default function NovoPacotePage() {
     }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function uploadImagem(
+    file: File,
+    tipo: "CAPA" | "CARD" | "BANNER",
+    pacoteId: number
+  ) {
+    const formDataUpload = new FormData();
+
+    formDataUpload.append("file", file);
+    formDataUpload.append("tipo", tipo);
+    formDataUpload.append("pacoteId", pacoteId.toString());
+
+    const response = await fetch("/api/admin/pacotes/upload", {
+      method: "POST",
+      body: formDataUpload,
+    });
+
+    let responseData: UploadResponse = {};
+
+    try {
+      responseData = (await response.json()) as UploadResponse;
+    } catch {
+      responseData = {};
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        responseData.error || `Erro ao enviar a imagem do tipo ${tipo}`
+      );
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (formData.categoria_id === "") {
+      toast.error("Selecione uma categoria");
+      return;
+    }
 
     try {
       setLoading(true);
       setLoadingMessage("Criando pacote...");
 
-      const res = await fetch("/api/admin/pacotes", {
+      const response = await fetch("/api/admin/pacotes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,44 +136,63 @@ export default function NovoPacotePage() {
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error("Erro ao criar pacote");
+      let responseData: {
+        pacote?: {
+          id: number;
+        };
+        error?: string;
+      } = {};
 
-      const { pacote } = await res.json();
-
-      async function uploadImagem(file: File, tipo: string) {
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("tipo", tipo);
-        fd.append("pacoteId", pacote.id.toString());
-
-        await fetch("/api/admin/pacotes/upload", {
-          method: "POST",
-          body: fd,
-        });
+      try {
+        responseData = await response.json();
+      } catch {
+        responseData = {};
       }
+
+      if (!response.ok || !responseData.pacote) {
+        throw new Error(responseData.error || "Erro ao criar pacote");
+      }
+
+      const { pacote } = responseData;
 
       setLoadingMessage("Enviando imagens...");
 
-      if (fotoCapa) await uploadImagem(fotoCapa, "CAPA");
-      if (fotoCard) await uploadImagem(fotoCard, "CARD");
-      if (fotoBanner) await uploadImagem(fotoBanner, "BANNER");
+      if (fotoCapa) {
+        await uploadImagem(fotoCapa, "CAPA", pacote.id);
+      }
+
+      if (fotoCard) {
+        await uploadImagem(fotoCard, "CARD", pacote.id);
+      }
+
+      if (fotoBanner) {
+        await uploadImagem(fotoBanner, "BANNER", pacote.id);
+      }
+
+      toast.success("Pacote criado com sucesso");
 
       window.location.href = `/admin/pacotes/${pacote.id}`;
-    } catch (err) {
-      toast.error("Erro ao salvar pacote");
-      console.error(err);
+    } catch (error) {
+      console.error("Erro ao salvar pacote:", error);
+
+      const message =
+        error instanceof Error ? error.message : "Erro ao salvar pacote";
+
+      toast.error(message);
     } finally {
       setLoading(false);
       setLoadingMessage("");
     }
   }
 
-  const categoriaAtual = categorias.find((c) => c.id === formData.categoria_id);
+  const categoriaAtual = categorias.find(
+    (categoria) => categoria.id === formData.categoria_id
+  );
 
   return (
-    <div className="bg-admin min-h-screen">
+    <div className="min-h-screen bg-admin">
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 sm:px-6 sm:py-10">
-        <h1 className="text-xl sm:text-2xl font-semibold text-admin">
+        <h1 className="text-xl font-semibold text-admin sm:text-2xl">
           Criar novo pacote
         </h1>
 
@@ -142,12 +230,16 @@ export default function NovoPacotePage() {
             onChange={updateField}
           />
 
-          <div className="rounded-xl border border-default overflow-hidden">
+          <div className="overflow-hidden rounded-xl border border-default">
             <PacoteView
               slug="preview"
               nome={formData.nome || "Nome do pacote"}
               categoria={
-                categoriaAtual ? { nome: categoriaAtual.nome } : undefined
+                categoriaAtual
+                  ? {
+                      nome: categoriaAtual.nome,
+                    }
+                  : undefined
               }
               data_inicio={
                 formData.data_inicio
@@ -159,7 +251,7 @@ export default function NovoPacotePage() {
               descricao={formData.descricao}
               preco={formData.preco}
               moeda={formData.moeda as "EUR" | "USD" | "BRL" | "GBP"}
-              capaUrl={fotoCapa ? URL.createObjectURL(fotoCapa) : undefined}
+              capaUrl={capaPreviewUrl}
             />
           </div>
 
@@ -167,7 +259,7 @@ export default function NovoPacotePage() {
             loading={loading}
             loadingMessage={loadingMessage}
             onCancel={() => {
-              if (confirm("Deseja cancelar?")) {
+              if (window.confirm("Deseja cancelar?")) {
                 window.location.href = "/admin/pacotes";
               }
             }}

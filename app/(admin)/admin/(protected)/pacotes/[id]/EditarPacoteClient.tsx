@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import InformacoesBasicas from "@/components/pacotes/novos/InformacoesBasicas";
+import ImagensPacote from "@/components/pacotes/novos/ImagensPacote";
 import ConteudoPacote from "@/components/pacotes/novos/ConteudoPacote";
 import StickyActions from "@/components/pacotes/novos/StickyActions";
 import ConfirmModal from "@/components/ui/ConfirmModal";
@@ -37,6 +38,12 @@ type Props = {
   categorias: Categoria[];
 };
 
+type TipoImagem = "CAPA" | "CARD" | "BANNER";
+
+type UploadResponse = {
+  error?: string;
+};
+
 export default function EditarPacoteClient({ pacote, categorias }: Props) {
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -56,6 +63,10 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
   const [listaCategorias, setListaCategorias] =
     useState<Categoria[]>(categorias);
 
+  const [fotoCapa, setFotoCapa] = useState<File | null>(null);
+  const [fotoCard, setFotoCard] = useState<File | null>(null);
+  const [fotoBanner, setFotoBanner] = useState<File | null>(null);
+
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -69,6 +80,31 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
     }));
   }
 
+  async function uploadImagem(file: File, tipo: TipoImagem, pacoteId: number) {
+    const formDataUpload = new FormData();
+
+    formDataUpload.append("file", file);
+    formDataUpload.append("tipo", tipo);
+    formDataUpload.append("pacoteId", pacoteId.toString());
+
+    const response = await fetch("/api/admin/pacotes/upload", {
+      method: "POST",
+      body: formDataUpload,
+    });
+
+    let responseData: UploadResponse = {};
+
+    try {
+      responseData = (await response.json()) as UploadResponse;
+    } catch {
+      responseData = {};
+    }
+
+    if (!response.ok) {
+      throw new Error(responseData.error || `Erro ao enviar a imagem ${tipo}`);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -76,7 +112,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
       setLoading(true);
       setLoadingMessage("Salvando alterações...");
 
-      const res = await fetch(`/api/admin/pacotes/${pacote.id}`, {
+      const response = await fetch(`/api/admin/pacotes/${pacote.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -84,14 +120,42 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) {
-        throw new Error("Erro ao atualizar pacote");
+      let responseData: UploadResponse = {};
+
+      try {
+        responseData = (await response.json()) as UploadResponse;
+      } catch {
+        responseData = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(responseData.error || "Erro ao atualizar pacote");
+      }
+
+      setLoadingMessage("Atualizando imagens...");
+
+      if (fotoCapa) {
+        await uploadImagem(fotoCapa, "CAPA", pacote.id);
+      }
+
+      if (fotoCard) {
+        await uploadImagem(fotoCard, "CARD", pacote.id);
+      }
+
+      if (fotoBanner) {
+        await uploadImagem(fotoBanner, "BANNER", pacote.id);
       }
 
       toast.success("Pacote atualizado com sucesso");
-    } catch (err) {
-      toast.error("Erro ao salvar alterações");
-      console.error(err);
+
+      window.location.reload();
+    } catch (error) {
+      console.error("Erro ao salvar alterações:", error);
+
+      const message =
+        error instanceof Error ? error.message : "Erro ao salvar alterações";
+
+      toast.error(message);
     } finally {
       setLoading(false);
       setLoadingMessage("");
@@ -103,20 +167,32 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
       setLoading(true);
       setLoadingMessage("Arquivando pacote...");
 
-      const res = await fetch(`/api/admin/pacotes/${pacote.id}`, {
+      const response = await fetch(`/api/admin/pacotes/${pacote.id}`, {
         method: "DELETE",
       });
 
-      if (!res.ok) {
-        throw new Error("Erro ao arquivar pacote");
+      let responseData: UploadResponse = {};
+
+      try {
+        responseData = (await response.json()) as UploadResponse;
+      } catch {
+        responseData = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(responseData.error || "Erro ao arquivar pacote");
       }
 
       toast.success("Pacote arquivado com sucesso");
 
       window.location.href = "/admin/pacotes";
-    } catch (err) {
-      toast.error("Erro ao arquivar pacote");
-      console.error(err);
+    } catch (error) {
+      console.error("Erro ao arquivar pacote:", error);
+
+      const message =
+        error instanceof Error ? error.message : "Erro ao arquivar pacote";
+
+      toast.error(message);
     } finally {
       setLoading(false);
       setLoadingMessage("");
@@ -148,6 +224,18 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
               destaque: formData.destaque,
             }}
             onChange={updateField}
+          />
+
+          <ImagensPacote
+            fotoCapa={fotoCapa}
+            setFotoCapa={setFotoCapa}
+            fotoCard={fotoCard}
+            setFotoCard={setFotoCard}
+            fotoBanner={fotoBanner}
+            setFotoBanner={setFotoBanner}
+            capaAtualUrl={pacote.capaUrl}
+            cardAtualUrl={pacote.cardUrl}
+            bannerAtualUrl={pacote.bannerUrl}
           />
 
           <ConteudoPacote
@@ -199,7 +287,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         onCancel={() => setShowCancelModal(false)}
         onConfirm={() => {
           setShowCancelModal(false);
-          history.back();
+          window.history.back();
         }}
       />
 
