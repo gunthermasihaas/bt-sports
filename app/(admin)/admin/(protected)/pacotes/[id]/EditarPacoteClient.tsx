@@ -9,6 +9,8 @@ import PacoteView from "@/components/pacotes/PacoteView";
 import { toast } from "sonner";
 import { PacoteFormState } from "@/types/pacoteForm";
 
+type Moeda = "EUR" | "USD" | "BRL" | "GBP";
+
 type Categoria = {
   id: number;
   nome: string;
@@ -20,7 +22,7 @@ type PacoteEditavel = {
   categoria_id: number;
   data_inicio: string;
   preco: number;
-  moeda?: string;
+  moeda?: Moeda;
   texto_destaque: string;
   resumo: string;
   descricao: string;
@@ -67,7 +69,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
     }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     try {
@@ -76,13 +78,17 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
 
       const res = await fetch(`/api/admin/pacotes/${pacote.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error("Erro ao atualizar pacote");
+      if (!res.ok) {
+        throw new Error("Erro ao atualizar pacote");
+      }
 
-      toast.success("Pacote atualizado");
+      toast.success("Pacote atualizado com sucesso");
     } catch (err) {
       toast.error("Erro ao salvar alterações");
       console.error(err);
@@ -95,17 +101,21 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
   async function handleDelete() {
     try {
       setLoading(true);
-      setLoadingMessage("Excluindo pacote...");
+      setLoadingMessage("Arquivando pacote...");
 
       const res = await fetch(`/api/admin/pacotes/${pacote.id}`, {
         method: "DELETE",
       });
 
-      if (!res.ok) throw new Error("Erro ao excluir pacote");
+      if (!res.ok) {
+        throw new Error("Erro ao arquivar pacote");
+      }
+
+      toast.success("Pacote arquivado com sucesso");
 
       window.location.href = "/admin/pacotes";
     } catch (err) {
-      toast.error("Erro ao excluir pacote");
+      toast.error("Erro ao arquivar pacote");
       console.error(err);
     } finally {
       setLoading(false);
@@ -114,11 +124,11 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
   }
 
   const categoriaAtual = listaCategorias.find(
-    (c) => c.id === formData.categoria_id
+    (categoria) => categoria.id === formData.categoria_id
   );
 
   return (
-    <div className="bg-admin min-h-screen">
+    <div className="min-h-screen bg-admin">
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 sm:px-6 sm:py-10">
         <h1 className="text-xl font-semibold text-admin sm:text-2xl">
           Editar pacote
@@ -158,11 +168,17 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         </form>
       </div>
 
-      <div className="rounded-xl border border-default overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-default">
         <PacoteView
           slug={`preview-${pacote.id}`}
           nome={formData.nome}
-          categoria={categoriaAtual ? { nome: categoriaAtual.nome } : undefined}
+          categoria={
+            categoriaAtual
+              ? {
+                  nome: categoriaAtual.nome,
+                }
+              : undefined
+          }
           data_inicio={
             formData.data_inicio ? new Date(formData.data_inicio) : undefined
           }
@@ -170,7 +186,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
           resumo={formData.resumo}
           descricao={formData.descricao}
           preco={formData.preco}
-          moeda={formData.moeda as "EUR" | "USD" | "BRL" | "GBP"}
+          moeda={formData.moeda as Moeda}
           capaUrl={pacote.capaUrl}
         />
       </div>
@@ -189,9 +205,9 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
 
       <ConfirmModal
         open={showDeleteModal}
-        title="Excluir pacote?"
-        description="Essa ação é permanente."
-        confirmLabel="Sim, excluir"
+        title="Arquivar pacote?"
+        description="O pacote será removido das áreas públicas. Os dados serão mantidos no banco."
+        confirmLabel="Sim, arquivar"
         danger
         loading={loading}
         onCancel={() => setShowDeleteModal(false)}

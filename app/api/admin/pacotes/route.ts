@@ -18,6 +18,19 @@ export async function POST(req: Request) {
     const body: unknown = await req.json();
     const data = pacoteSchema.parse(body);
 
+    const dataInicio = data.data_inicio ? new Date(data.data_inicio) : null;
+
+    if (dataInicio && Number.isNaN(dataInicio.getTime())) {
+      return NextResponse.json(
+        {
+          error: "Data de início inválida",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     const slugBase = slugify(data.nome, {
       lower: true,
       strict: true,
@@ -60,7 +73,7 @@ export async function POST(req: Request) {
           nome: data.nome.trim(),
           slug,
           categoria_id: data.categoria_id,
-          data_inicio: data.data_inicio ? new Date(data.data_inicio) : null,
+          data_inicio: dataInicio,
           preco: data.preco,
           moeda: data.moeda as Moeda,
           texto_destaque: data.texto_destaque ?? null,
