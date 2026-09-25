@@ -8,6 +8,7 @@ type UploadImagemProps = {
   value: File | null;
   onChange: (file: File | null) => void;
   imagemAtualUrl?: string;
+  referenciaImagem?: string;
   aspect?: "16:9" | "4:3" | "21:9";
   description?: string;
   location?: string;
@@ -20,6 +21,7 @@ export default function UploadImagem({
   value,
   onChange,
   imagemAtualUrl,
+  referenciaImagem,
   aspect = "16:9",
   description,
   location,
@@ -30,7 +32,7 @@ export default function UploadImagem({
 
   useEffect(() => {
     if (!value) {
-      // Necessário para limpar a pré-visualização anterior.
+      // Limpa a pré-visualização anterior.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreviewUrl(null);
       return;
@@ -70,6 +72,7 @@ export default function UploadImagem({
 
   return (
     <div className="space-y-4 rounded-xl border border-default bg-surface p-4">
+      {/* Cabeçalho */}
       <div className="space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <label className="block text-sm font-semibold text-admin">
@@ -86,6 +89,7 @@ export default function UploadImagem({
         )}
       </div>
 
+      {/* Local de exibição */}
       {location && (
         <div className="rounded-lg border border-default bg-surface-muted p-3">
           <div className="mb-1 flex items-center gap-2">
@@ -102,49 +106,43 @@ export default function UploadImagem({
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      {/* Conteúdo de referência e upload */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Screenshot real */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-admin-muted">
-              Visualização no site
+              Referência no site
             </span>
 
-            <span className="text-xs text-admin-muted">Ilustração</span>
+            <span className="text-xs text-admin-muted">Exemplo real</span>
           </div>
 
-          <div className="rounded-lg border border-default bg-surface-muted p-3">
-            <div className="overflow-hidden rounded-md border border-default bg-surface">
-              <div className="flex h-6 items-center gap-1 border-b border-default px-2">
-                <span className="h-2 w-2 rounded-full bg-border-muted" />
-                <span className="h-2 w-2 rounded-full bg-border-muted" />
-                <span className="h-2 w-2 rounded-full bg-border-muted" />
-              </div>
-
-              <div className="space-y-2 p-2">
-                <div className="h-2 w-1/3 rounded bg-surface-muted" />
-
-                <div
-                  className={`relative flex items-center justify-center overflow-hidden rounded border-2 border-dashed border-brand bg-brand/5 ${aspectClass}`}
-                >
-                  <div className="px-3 text-center">
-                    <p className="text-xs font-semibold text-admin">
-                      Área da imagem
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-admin-muted">
-                      {aspectLabel}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="h-2 w-4/5 rounded bg-surface-muted" />
-                <div className="h-2 w-full rounded bg-surface-muted" />
-                <div className="h-2 w-3/5 rounded bg-surface-muted" />
-              </div>
+          {referenciaImagem ? (
+            <div className="overflow-hidden rounded-lg border border-default bg-surface-muted">
+              <Image
+                src={referenciaImagem}
+                alt={`Exemplo de utilização de ${label.toLowerCase()}`}
+                width={1600}
+                height={900}
+                className="h-auto max-h-[420px] w-full object-contain"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
             </div>
-          </div>
+          ) : (
+            <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed border-border-muted bg-surface-muted p-6 text-center">
+              <p className="text-sm text-admin-muted">
+                Nenhuma imagem de referência configurada.
+              </p>
+            </div>
+          )}
+
+          <p className="text-xs leading-5 text-admin-muted">
+            Esta imagem mostra a área do site em que o arquivo será utilizado.
+          </p>
         </div>
 
+        {/* Upload e preview */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-admin-muted">
@@ -156,6 +154,7 @@ export default function UploadImagem({
             )}
           </div>
 
+          {/* Imagem já cadastrada */}
           {!value && imagemAtualUrl ? (
             <div className="space-y-3">
               <div
@@ -183,6 +182,7 @@ export default function UploadImagem({
               </label>
             </div>
           ) : !value ? (
+            /* Nenhuma imagem selecionada */
             <label className="flex min-h-48 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border-muted bg-surface-muted p-6 text-center transition-colors hover:border-brand">
               <span className="text-sm text-admin-muted">
                 Selecione uma imagem para visualizar
@@ -202,6 +202,7 @@ export default function UploadImagem({
               />
             </label>
           ) : (
+            /* Nova imagem selecionada */
             <div className="space-y-3">
               {previewUrl && (
                 <div
@@ -244,6 +245,7 @@ export default function UploadImagem({
         </div>
       </div>
 
+      {/* Informações técnicas */}
       <div className="grid gap-3 border-t border-default pt-4 sm:grid-cols-2">
         <div className="rounded-lg bg-surface-muted p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-admin-muted">
@@ -266,6 +268,7 @@ export default function UploadImagem({
         )}
       </div>
 
+      {/* Orientação adicional */}
       {helperText && (
         <p className="text-xs leading-5 text-admin-muted">{helperText}</p>
       )}

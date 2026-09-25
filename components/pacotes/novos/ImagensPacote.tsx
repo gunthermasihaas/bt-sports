@@ -4,8 +4,10 @@ import UploadImagem from "@/components/admin/UploadImagem";
 type ImagensPacoteProps = {
   fotoCapa: File | null;
   setFotoCapa: (file: File | null) => void;
+
   fotoCard: File | null;
   setFotoCard: (file: File | null) => void;
+
   fotoBanner: File | null;
   setFotoBanner: (file: File | null) => void;
 
@@ -28,13 +30,15 @@ export default function ImagensPacote({
   return (
     <Section
       title="Imagens do pacote"
-      description="Escolha cada imagem observando o local onde ela será exibida no site. O preview utiliza a proporção do componente."
+      description="Escolha cada imagem observando o local onde ela será exibida no site. As referências mostram a utilização de cada formato."
     >
       <div className="space-y-6">
+        {/* Imagem de capa */}
         <UploadImagem
           label="Imagem de capa"
           description="Imagem principal utilizada para apresentar o pacote."
           location="Aparece no topo da página de detalhes do pacote, como imagem principal da experiência."
+          referenciaImagem="/img/placeholder-capa.png"
           recommendedSize="1600 × 900 px"
           helperText="Prefira uma imagem horizontal, com o assunto principal bem enquadrado. Evite posicionar informações importantes nas extremidades."
           value={fotoCapa}
@@ -43,10 +47,12 @@ export default function ImagensPacote({
           aspect="16:9"
         />
 
+        {/* Imagem do card */}
         <UploadImagem
           label="Imagem do card"
           description="Imagem utilizada na apresentação resumida do pacote."
           location="Aparece nos cards de pacotes, como na página inicial, listagens e áreas de destaque."
+          referenciaImagem="/img/placeholder-card.png"
           recommendedSize="1200 × 900 px"
           helperText="Escolha uma imagem que continue identificável mesmo quando for exibida em um espaço menor."
           value={fotoCard}
@@ -55,10 +61,12 @@ export default function ImagensPacote({
           aspect="4:3"
         />
 
+        {/* Imagem de banner */}
         <UploadImagem
           label="Imagem de banner"
           description="Imagem horizontal utilizada em áreas de destaque."
           location="Aparece na área de banner ou destaque da página configurada para o pacote."
+          referenciaImagem="/img/placeholder-banner.png"
           recommendedSize="2100 × 900 px"
           helperText="Prefira uma composição ampla. Evite colocar textos ou elementos importantes nas bordas, pois o corte pode variar conforme a tela."
           value={fotoBanner}
