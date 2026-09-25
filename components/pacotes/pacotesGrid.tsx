@@ -1,11 +1,14 @@
 import PacoteCard from "@/components/pacotes/pacote-card";
 
+type Moeda = "EUR" | "USD" | "BRL" | "GBP";
+
 type Props = {
   pacotes: {
     id: number;
     nome: string;
     resumo?: string;
     preco?: number;
+    moeda?: Moeda;
     imageUrl?: string;
     dataEvento?: string;
     href: string;
@@ -30,6 +33,7 @@ export default function PacotesGrid({ pacotes }: Props) {
           nome={pacote.nome}
           resumo={pacote.resumo}
           preco={pacote.preco}
+          moeda={pacote.moeda}
           dataEvento={pacote.dataEvento}
           imageUrl={pacote.imageUrl}
         />

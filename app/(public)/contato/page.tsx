@@ -16,9 +16,10 @@ type Props = {
 export default async function ContatoPage({ searchParams }: Props) {
   const params = await searchParams;
 
-  const pacoteNome = typeof params.pacote === "string" ? params.pacote : "";
+  const pacoteNome =
+    typeof params.pacote === "string" ? params.pacote.trim() : "";
 
-  const pacoteSlug = typeof params.slug === "string" ? params.slug : "";
+  const pacoteSlug = typeof params.slug === "string" ? params.slug.trim() : "";
 
   const mensagemInicial =
     pacoteNome && pacoteSlug

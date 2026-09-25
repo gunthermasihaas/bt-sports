@@ -144,6 +144,7 @@ export default function NovoPacotePage() {
 
           <div className="rounded-xl border border-default overflow-hidden">
             <PacoteView
+              slug="preview"
               nome={formData.nome || "Nome do pacote"}
               categoria={
                 categoriaAtual ? { nome: categoriaAtual.nome } : undefined
@@ -157,6 +158,7 @@ export default function NovoPacotePage() {
               resumo={formData.resumo}
               descricao={formData.descricao}
               preco={formData.preco}
+              moeda={formData.moeda as "EUR" | "USD" | "BRL" | "GBP"}
               capaUrl={fotoCapa ? URL.createObjectURL(fotoCapa) : undefined}
             />
           </div>

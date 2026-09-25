@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Moeda } from "@/generated/prisma";
 import { ZodError } from "zod";
 import slugify from "slugify";
 
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const body: unknown = await req.json();
     const data = pacoteSchema.parse(body);
 
     const slugBase = slugify(data.nome, {
@@ -61,6 +62,7 @@ export async function POST(req: Request) {
           categoria_id: data.categoria_id,
           data_inicio: data.data_inicio ? new Date(data.data_inicio) : null,
           preco: data.preco,
+          moeda: data.moeda as Moeda,
           texto_destaque: data.texto_destaque ?? null,
           resumo: data.resumo ?? null,
           descricao: data.descricao ?? null,

@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { useEstados } from "./hooks/useEstados";
 import { useCidades } from "./hooks/useCidades";
+
 import { EstadoSelect } from "./EstadoSelect";
 import { CidadeSelect } from "./CidadeSelect";
 import { FormInput } from "./FormInput";
@@ -11,6 +12,10 @@ import { FormTextarea } from "./FormTextarea";
 
 type ContactFormProps = {
   mensagemInicial?: string;
+};
+
+type ContactErrorResponse = {
+  error?: string;
 };
 
 export default function ContactForm({
@@ -21,7 +26,6 @@ export default function ContactForm({
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
   const [emailErro, setEmailErro] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [sucesso, setSucesso] = useState(false);
   const [erroEnvio, setErroEnvio] = useState("");
@@ -29,20 +33,52 @@ export default function ContactForm({
   const { filtradas, busca, setBusca, setCidades } = useCidades(estado);
 
   function validarEmail(valor: string) {
-    if (!valor.trim()) {
+    const email = valor.trim();
+
+    if (!email) {
       setEmailErro("E-mail é obrigatório");
       return;
     }
 
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    setEmailErro(regex.test(valor) ? "" : "E-mail inválido");
+    setEmailErro(regex.test(email) ? "" : "E-mail inválido");
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (emailErro || loading) {
+    if (loading) {
+      return;
+    }
+
+    const formElement = e.currentTarget;
+    const formData = new FormData(formElement);
+
+    const nome = String(formData.get("nome") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const telefone = String(formData.get("telefone") ?? "").trim();
+    const mensagem = String(formData.get("mensagem") ?? "").trim();
+
+    validarEmail(email);
+
+    if (!nome) {
+      setErroEnvio("Nome é obrigatório.");
+      return;
+    }
+
+    if (!email) {
+      setErroEnvio("E-mail é obrigatório.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErroEnvio("Informe um e-mail válido.");
+      return;
+    }
+
+    if (mensagem.length < 10) {
+      setErroEnvio("A mensagem deve ter pelo menos 10 caracteres.");
       return;
     }
 
@@ -50,16 +86,13 @@ export default function ContactForm({
     setSucesso(false);
     setErroEnvio("");
 
-    const formElement = e.currentTarget;
-    const formData = new FormData(formElement);
-
     const data = {
-      nome: formData.get("nome"),
-      email: formData.get("email"),
-      telefone: formData.get("telefone"),
+      nome,
+      email,
+      telefone,
       estado,
       cidade,
-      mensagem: formData.get("mensagem"),
+      mensagem,
     };
 
     try {
@@ -71,18 +104,36 @@ export default function ContactForm({
         body: JSON.stringify(data),
       });
 
+      const responseData: ContactErrorResponse | null = await res
+        .json()
+        .catch(() => null);
+
       if (!res.ok) {
-        setErroEnvio("Não foi possível enviar sua mensagem. Tente novamente.");
+        if (
+          responseData &&
+          typeof responseData.error === "string" &&
+          responseData.error.trim()
+        ) {
+          setErroEnvio(responseData.error);
+        } else {
+          setErroEnvio(
+            "Não foi possível enviar sua mensagem. Tente novamente."
+          );
+        }
+
         return;
       }
 
       setSucesso(true);
+      setErroEnvio("");
 
       formElement.reset();
+
       setEstado("");
       setCidade("");
       setCidades([]);
       setBusca("");
+      setEmailErro("");
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
 
@@ -157,13 +208,15 @@ export default function ContactForm({
         />
 
         {sucesso && (
-          <p className="text-center text-sm text-green-600">
+          <p role="status" className="text-center text-sm text-green-600">
             Mensagem enviada com sucesso!
           </p>
         )}
 
         {erroEnvio && (
-          <p className="text-center text-sm text-danger">{erroEnvio}</p>
+          <p role="alert" className="text-center text-sm text-danger">
+            {erroEnvio}
+          </p>
         )}
 
         <button

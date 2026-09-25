@@ -15,6 +15,13 @@ enum TipoFoto {
   BANNER
 }
 
+enum Moeda {
+  EUR
+  USD
+  BRL
+  GBP
+}
+
 model Contato {
   id         Int      @id @default(autoincrement())
   nome       String   @db.VarChar(255)
@@ -50,6 +57,7 @@ model Pacote {
 
   data_inicio    DateTime? @db.Date
   preco          Decimal?  @db.Decimal(10, 2)
+  moeda          Moeda    @default(EUR)
 
   texto_destaque String?
   resumo         String?
@@ -65,7 +73,7 @@ model Pacote {
 
   categoria CategoriaViagem @relation(fields: [categoria_id], references: [id], onDelete: Restrict)
 
-  fotos        Foto[]
+  fotos        Foto[] 
   depoimentos Depoimento[]
 
   @@index([categoria_id])

@@ -19,6 +19,7 @@ export default async function Home() {
           slug={destaque.slug}
           nome={destaque.nome}
           preco={destaque.preco}
+          moeda={destaque.moeda}
           dataEvento={formatarDataLonga(destaque.dataInicio)}
           bannerUrl={destaque.imageUrl}
         />

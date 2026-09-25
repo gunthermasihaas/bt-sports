@@ -63,6 +63,7 @@ export async function getPacotesUi(order: Order) {
     nome: p.nome,
     resumo: p.resumo ?? "",
     preco: Number(p.preco ?? 0),
+    moeda: p.moeda,
     dataEvento: formatarDataCurta(p.data_inicio),
     imageUrl: p.fotos[0]?.url,
     href: `/pacotes/${p.slug}`,

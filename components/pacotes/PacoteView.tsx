@@ -11,6 +11,8 @@ type Categoria = {
   nome: string;
 };
 
+type Moeda = "EUR" | "USD" | "BRL" | "GBP";
+
 type Props = {
   slug: string;
   nome: string;
@@ -20,8 +22,25 @@ type Props = {
   resumo?: string;
   descricao?: string;
   preco?: number;
+  moeda?: Moeda;
   capaUrl?: string;
 };
+
+const moedaLocaleMap: Record<Moeda, string> = {
+  EUR: "pt-PT",
+  USD: "en-US",
+  BRL: "pt-BR",
+  GBP: "en-GB",
+};
+
+function formatarPreco(preco: number, moeda: Moeda) {
+  return new Intl.NumberFormat(moedaLocaleMap[moeda], {
+    style: "currency",
+    currency: moeda,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(preco);
+}
 
 export default function PacoteView({
   slug,
@@ -32,6 +51,7 @@ export default function PacoteView({
   resumo,
   descricao,
   preco,
+  moeda = "EUR",
   capaUrl,
 }: Props) {
   const descricaoSanitizada = useMemo(() => {
@@ -117,10 +137,7 @@ export default function PacoteView({
 
                   <p className="wrap-break-word text-2xl font-bold leading-tight text-on-surface sm:text-3xl">
                     {preco !== undefined
-                      ? `€ ${preco.toLocaleString("pt-BR", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}`
+                      ? formatarPreco(preco, moeda)
                       : "Sob consulta"}
                   </p>
                 </div>

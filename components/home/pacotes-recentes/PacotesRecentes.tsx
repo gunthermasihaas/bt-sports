@@ -1,11 +1,15 @@
-import PacoteCard from "@/components/pacotes/pacote-card";
 import Link from "next/link";
+
+import PacoteCard from "@/components/pacotes/pacote-card";
+
+type Moeda = "EUR" | "USD" | "BRL" | "GBP";
 
 type Pacote = {
   id: number;
   nome: string;
   resumo?: string | null;
   preco?: number;
+  moeda?: Moeda;
   dataEvento?: string;
   imageUrl?: string;
   href: string;
@@ -38,6 +42,7 @@ export default function PacotesRecentes({ pacotes }: Props) {
               nome={pacote.nome}
               resumo={pacote.resumo ?? undefined}
               preco={pacote.preco}
+              moeda={pacote.moeda}
               dataEvento={pacote.dataEvento}
               imageUrl={pacote.imageUrl}
               href={pacote.href}
@@ -50,15 +55,11 @@ export default function PacotesRecentes({ pacotes }: Props) {
             <Link
               href="/pacotes"
               className="
-            inline-flex items-center
-            rounded-full
-            border border-brand
-            px-5 py-2
-            text-sm font-medium
-            text-brand
-            transition
-            hover:bg-brand hover:text-on-brand
-            "
+                inline-flex items-center rounded-full
+                border border-brand px-5 py-2
+                text-sm font-medium text-brand
+                transition hover:bg-brand hover:text-on-brand
+              "
             >
               Ver todos os pacotes
             </Link>

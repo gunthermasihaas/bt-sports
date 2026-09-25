@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function getPacoteDestaque() {
   const pacote = await prisma.pacote.findFirst({
-    where: { destaque: true },
+    where: {
+      destaque: true,
+      deleted_at: null,
+    },
     include: {
       fotos: {
         where: { tipo: TipoFoto.BANNER },
@@ -19,6 +22,7 @@ export async function getPacoteDestaque() {
     nome: pacote.nome,
     resumo: pacote.resumo,
     preco: pacote.preco ? Number(pacote.preco) : undefined,
+    moeda: pacote.moeda,
     imageUrl: pacote.fotos[0]?.url,
     dataInicio: pacote.data_inicio,
     href: `/pacotes/${pacote.slug}`,

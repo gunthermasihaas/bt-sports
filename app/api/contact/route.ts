@@ -65,6 +65,7 @@ function getRequiredEnv(name: string): string {
 export async function POST(req: Request) {
   try {
     const body: unknown = await req.json();
+
     const result = contactSchema.safeParse(body);
 
     if (!result.success) {
@@ -114,6 +115,7 @@ export async function POST(req: Request) {
       to: adminEmail,
       replyTo: email,
       subject: "Novo contato pelo site",
+
       text: [
         "Novo contato",
         "",
@@ -126,6 +128,7 @@ export async function POST(req: Request) {
         "Mensagem:",
         mensagem,
       ].join("\n"),
+
       html: `
         <!doctype html>
         <html lang="pt-BR">
@@ -157,7 +160,9 @@ export async function POST(req: Request) {
               ${safeCidade}
             </p>
 
-            <p><strong>Mensagem:</strong></p>
+            <p>
+              <strong>Mensagem:</strong>
+            </p>
 
             <p>${safeMensagem}</p>
           </body>
@@ -165,7 +170,14 @@ export async function POST(req: Request) {
       `,
     });
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+      },
+      {
+        status: 200,
+      }
+    );
   } catch (error) {
     console.error("POST /api/contact", error);
 
@@ -174,7 +186,9 @@ export async function POST(req: Request) {
         success: false,
         error: "Erro ao enviar mensagem",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

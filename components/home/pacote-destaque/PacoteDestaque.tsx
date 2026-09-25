@@ -1,20 +1,40 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+
+type Moeda = "EUR" | "USD" | "BRL" | "GBP";
 
 type Props = {
   slug: string;
   nome: string;
   preco?: number;
+  moeda?: Moeda;
   dataEvento?: string;
-  bannerUrl: string;
+  bannerUrl?: string;
 };
+
+function formatarPreco(preco: number, moeda: Moeda) {
+  const locales: Record<Moeda, string> = {
+    EUR: "pt-PT",
+    USD: "en-US",
+    BRL: "pt-BR",
+    GBP: "en-GB",
+  };
+
+  return new Intl.NumberFormat(locales[moeda], {
+    style: "currency",
+    currency: moeda,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(preco);
+}
 
 export default function PacoteDestaque({
   slug,
   nome,
   preco,
+  moeda = "EUR",
   dataEvento,
   bannerUrl,
 }: Props) {
@@ -29,12 +49,9 @@ export default function PacoteDestaque({
       >
         <div
           className="
-    relative w-full
-    h-[45vh]
-    min-h-65
-    max-h-130
-    bg-surface-muted
-  "
+            relative h-[45vh] min-h-65 max-h-130
+            w-full bg-surface-muted
+          "
         >
           {bannerUrl && (
             <Image
@@ -44,11 +61,10 @@ export default function PacoteDestaque({
               priority
               sizes="100vw"
               className="
-    object-cover
-    object-center
-    transition-transform duration-700 ease-out
-    group-hover:scale-[1.04]
-  "
+                object-cover object-center
+                transition-transform duration-700 ease-out
+                group-hover:scale-[1.04]
+              "
             />
           )}
 
@@ -56,10 +72,8 @@ export default function PacoteDestaque({
 
           <div
             className="
-              absolute inset-0
-              bg-brand/20
-              opacity-0
-              transition-opacity duration-300
+              absolute inset-0 bg-brand/20
+              opacity-0 transition-opacity duration-300
               group-hover:opacity-100
             "
           />
@@ -72,12 +86,12 @@ export default function PacoteDestaque({
                 {dataEvento}
               </span>
             )}
+
             <div className="max-w-3xl space-y-3">
               <h2
                 className="
-                  text-2xl sm:text-3xl lg:text-4xl
-                  font-bold leading-tight
-                  text-on-brand
+                  text-2xl font-bold leading-tight text-on-brand
+                  sm:text-3xl lg:text-4xl
                 "
               >
                 {nome}
@@ -86,24 +100,19 @@ export default function PacoteDestaque({
               <div className="flex flex-wrap items-center gap-4">
                 <span
                   className="
-                    rounded-md
-                    bg-brand
-                    px-4 py-2
-                    text-sm font-semibold
-                    text-on-brand
+                    rounded-md bg-brand px-4 py-2
+                    text-sm font-semibold text-on-brand
                   "
                 >
-                  {preco
-                    ? `A partir de € ${preco.toLocaleString("pt-BR")}`
+                  {preco !== undefined && preco !== null
+                    ? `A partir de ${formatarPreco(preco, moeda)}`
                     : "Sob consulta"}
                 </span>
 
                 <span
                   className="
-                    text-sm font-medium
-                    text-on-brand/80
-                    group-hover:underline
-                    underline-offset-4
+                    text-sm font-medium text-on-brand/80
+                    underline-offset-4 group-hover:underline
                   "
                 >
                   Ver detalhes →

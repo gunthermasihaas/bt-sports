@@ -42,6 +42,7 @@ export default async function PacotePage({ params }: Props) {
       resumo={pacote.resumo ?? undefined}
       descricao={pacote.descricao ?? undefined}
       preco={pacote.preco?.toNumber() ?? undefined}
+      moeda={pacote.moeda}
       capaUrl={capa?.url}
     />
   );

@@ -160,6 +160,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
 
       <div className="rounded-xl border border-default overflow-hidden">
         <PacoteView
+          slug={`preview-${pacote.id}`}
           nome={formData.nome}
           categoria={categoriaAtual ? { nome: categoriaAtual.nome } : undefined}
           data_inicio={
@@ -169,6 +170,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
           resumo={formData.resumo}
           descricao={formData.descricao}
           preco={formData.preco}
+          moeda={formData.moeda as "EUR" | "USD" | "BRL" | "GBP"}
           capaUrl={pacote.capaUrl}
         />
       </div>

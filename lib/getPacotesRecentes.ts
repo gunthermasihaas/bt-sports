@@ -6,6 +6,9 @@ import { formatarDataCurta } from "@/lib/formatarData";
 export async function getPacotesRecentes(limit = 6) {
   try {
     const pacotes = await prisma.pacote.findMany({
+      where: {
+        deleted_at: null,
+      },
       orderBy: {
         created_at: "desc",
       },
@@ -27,6 +30,7 @@ export async function getPacotesRecentes(limit = 6) {
       nome: pacote.nome,
       resumo: pacote.resumo,
       preco: pacote.preco ? Number(pacote.preco) : undefined,
+      moeda: pacote.moeda,
       dataEvento: formatarDataCurta(pacote.data_inicio),
       imageUrl: pacote.fotos[0]?.url,
       href: `/pacotes/${pacote.slug}`,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { Moeda } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { pacotePatchSchema } from "@/app/(admin)/admin/(protected)/pacotes/novo/schema";
@@ -124,6 +125,10 @@ export async function PATCH(req: Request, context: RouteContext) {
 
           ...(data.preco !== undefined && {
             preco: data.preco,
+          }),
+
+          ...(data.moeda !== undefined && {
+            moeda: data.moeda as Moeda,
           }),
 
           ...(data.texto_destaque !== undefined && {

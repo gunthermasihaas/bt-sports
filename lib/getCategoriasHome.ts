@@ -3,16 +3,31 @@ import { categoriasHomeMock } from "@/mocks/categoriasHome";
 
 export async function getCategoriasHome() {
   const categoriasDb = await prisma.categoriaViagem.findMany({
-    include: {
-      _count: {
-        select: { pacotes: true },
+    where: {
+      pacotes: {
+        some: {
+          deleted_at: null,
+        },
       },
     },
-    orderBy: { nome: "asc" },
+    include: {
+      _count: {
+        select: {
+          pacotes: {
+            where: {
+              deleted_at: null,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      nome: "asc",
+    },
   });
 
   const categoriasComPacotes = categoriasDb.filter(
-    (cat) => cat._count.pacotes > 0
+    (categoria) => categoria._count.pacotes > 0
   );
 
   if (categoriasComPacotes.length > 0) {
