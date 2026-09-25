@@ -10,17 +10,27 @@ export default async function EditarPacotePage({
   const { id } = await params;
   const pacoteId = Number(id);
 
-  if (Number.isNaN(pacoteId)) notFound();
+  if (!Number.isInteger(pacoteId) || pacoteId <= 0) {
+    notFound();
+  }
 
   const pacote = await prisma.pacote.findUnique({
-    where: { id: pacoteId },
-    include: { fotos: true },
+    where: {
+      id: pacoteId,
+    },
+    include: {
+      fotos: true,
+    },
   });
 
-  if (!pacote) notFound();
+  if (!pacote || pacote.deleted_at !== null) {
+    notFound();
+  }
 
   const categorias = await prisma.categoriaViagem.findMany({
-    orderBy: { nome: "asc" },
+    orderBy: {
+      nome: "asc",
+    },
   });
 
   const foto = (tipo: string) => pacote.fotos.find((f) => f.tipo === tipo)?.url;
@@ -35,6 +45,7 @@ export default async function EditarPacotePage({
           ? pacote.data_inicio.toISOString().slice(0, 10)
           : "",
         preco: pacote.preco ? Number(pacote.preco) : 0,
+        moeda: pacote.moeda,
         texto_destaque: pacote.texto_destaque ?? "",
         resumo: pacote.resumo ?? "",
         descricao: pacote.descricao ?? "",
