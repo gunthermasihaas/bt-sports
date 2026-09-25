@@ -230,30 +230,46 @@ export async function DELETE(_req: Request, context: RouteContext) {
       });
 
       if (pacote.destaque) {
-        const novoDestaque = await tx.pacote.findFirst({
+        const destaqueExistente = await tx.pacote.findFirst({
           where: {
             id: {
               not: pacoteId,
             },
             deleted_at: null,
-          },
-          orderBy: {
-            created_at: "desc",
+            destaque: true,
           },
           select: {
             id: true,
           },
         });
 
-        if (novoDestaque) {
-          await tx.pacote.update({
+        if (!destaqueExistente) {
+          const novoDestaque = await tx.pacote.findFirst({
             where: {
-              id: novoDestaque.id,
+              id: {
+                not: pacoteId,
+              },
+              deleted_at: null,
+              destaque: false,
             },
-            data: {
-              destaque: true,
+            orderBy: {
+              created_at: "desc",
+            },
+            select: {
+              id: true,
             },
           });
+
+          if (novoDestaque) {
+            await tx.pacote.update({
+              where: {
+                id: novoDestaque.id,
+              },
+              data: {
+                destaque: true,
+              },
+            });
+          }
         }
       }
     });

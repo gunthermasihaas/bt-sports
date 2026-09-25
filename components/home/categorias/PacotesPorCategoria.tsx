@@ -1,7 +1,8 @@
-import { prisma } from "@/lib/prisma";
 import { TipoFoto } from "@/generated/prisma";
+
 import PacoteCard from "@/components/pacotes/pacote-card";
 import { formatarDataCurta } from "@/lib/formatarData";
+import { prisma } from "@/lib/prisma";
 
 type Props = {
   slug: string;
@@ -9,15 +10,22 @@ type Props = {
 
 export default async function PacotesPorCategoria({ slug }: Props) {
   const categoria = await prisma.categoriaViagem.findUnique({
-    where: { slug },
+    where: {
+      slug,
+    },
     include: {
       pacotes: {
+        where: {
+          deleted_at: null,
+        },
         orderBy: {
           data_inicio: "asc",
         },
         include: {
           fotos: {
-            where: { tipo: TipoFoto.CARD },
+            where: {
+              tipo: TipoFoto.CARD,
+            },
             take: 1,
           },
         },

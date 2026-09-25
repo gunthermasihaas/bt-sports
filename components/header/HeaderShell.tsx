@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
 import CurrencyButton from "./CurrencyButton";
 
@@ -38,6 +38,8 @@ export function HeaderShell({
     current: null as CurrentApi | null,
     history: [] as DailyItem[],
   });
+
+  const currencyLoadedRef = useRef(false);
 
   const [eur, setEur] = useState({
     current: null as CurrentApi | null,
@@ -78,10 +80,13 @@ export function HeaderShell({
   }
 
   useEffect(() => {
-    if (currencyOpen && !usd.current) {
-      fetchCurrency();
+    if (!currencyOpen || currencyLoadedRef.current) {
+      return;
     }
-  }, [currencyOpen, usd.current]);
+
+    currencyLoadedRef.current = true;
+    void fetchCurrency();
+  }, [currencyOpen]);
 
   return (
     <>

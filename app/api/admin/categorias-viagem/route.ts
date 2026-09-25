@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@/generated/prisma";
+import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 
-function gerarSlug(nome: string) {
+const categoriaSchema = z.object({
+  nome: z
+    .string()
+    .trim()
+    .min(1, "Nome da categoria é obrigatório")
+    .max(100, "O nome da categoria deve ter no máximo 100 caracteres"),
+});
+
+function gerarSlug(nome: string): string {
   return nome
     .toLowerCase()
     .normalize("NFD")
@@ -12,6 +22,13 @@ function gerarSlug(nome: string) {
     .trim()
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2002"
+  );
 }
 
 export async function GET() {
@@ -25,6 +42,13 @@ export async function GET() {
     const categorias = await prisma.categoriaViagem.findMany({
       orderBy: {
         nome: "asc",
+      },
+      select: {
+        id: true,
+        nome: true,
+        slug: true,
+        created_at: true,
+        updated_at: true,
       },
     });
 
@@ -51,12 +75,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const body: unknown = await req.json();
+    const result = categoriaSchema.safeParse(body);
 
-    if (typeof body.nome !== "string" || !body.nome.trim()) {
+    if (!result.success) {
       return NextResponse.json(
         {
-          error: "Nome da categoria é obrigatório",
+          error: "Dados inválidos",
+          details: result.error.flatten().fieldErrors,
         },
         {
           status: 400,
@@ -64,19 +90,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const nome = body.nome.trim();
-
-    if (nome.length > 100) {
-      return NextResponse.json(
-        {
-          error: "O nome da categoria deve ter no máximo 100 caracteres",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
+    const nome = result.data.nome;
     const slug = gerarSlug(nome);
 
     if (!slug) {
@@ -104,6 +118,9 @@ export async function POST(req: Request) {
           },
         ],
       },
+      select: {
+        id: true,
+      },
     });
 
     if (categoriaExistente) {
@@ -122,12 +139,30 @@ export async function POST(req: Request) {
         nome,
         slug,
       },
+      select: {
+        id: true,
+        nome: true,
+        slug: true,
+        created_at: true,
+        updated_at: true,
+      },
     });
 
     return NextResponse.json(categoria, {
       status: 201,
     });
   } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return NextResponse.json(
+        {
+          error: "Já existe uma categoria com esse nome ou slug",
+        },
+        {
+          status: 409,
+        }
+      );
+    }
+
     console.error("POST /api/admin/categorias-viagem", error);
 
     return NextResponse.json(

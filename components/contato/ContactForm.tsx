@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import { useEstados } from "./hooks/useEstados";
 import { useCidades } from "./hooks/useCidades";
 import { EstadoSelect } from "./EstadoSelect";
@@ -8,7 +9,13 @@ import { CidadeSelect } from "./CidadeSelect";
 import { FormInput } from "./FormInput";
 import { FormTextarea } from "./FormTextarea";
 
-export default function ContactForm() {
+type ContactFormProps = {
+  mensagemInicial?: string;
+};
+
+export default function ContactForm({
+  mensagemInicial = "",
+}: ContactFormProps) {
   const estados = useEstados();
 
   const [estado, setEstado] = useState("");
@@ -17,22 +24,34 @@ export default function ContactForm() {
 
   const [loading, setLoading] = useState(false);
   const [sucesso, setSucesso] = useState(false);
+  const [erroEnvio, setErroEnvio] = useState("");
 
   const { filtradas, busca, setBusca, setCidades } = useCidades(estado);
 
   function validarEmail(valor: string) {
+    if (!valor.trim()) {
+      setEmailErro("E-mail é obrigatório");
+      return;
+    }
+
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     setEmailErro(regex.test(valor) ? "" : "E-mail inválido");
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (emailErro) return;
+
+    if (emailErro || loading) {
+      return;
+    }
 
     setLoading(true);
     setSucesso(false);
+    setErroEnvio("");
 
-    const formData = new FormData(e.currentTarget);
+    const formElement = e.currentTarget;
+    const formData = new FormData(formElement);
 
     const data = {
       nome: formData.get("nome"),
@@ -43,21 +62,33 @@ export default function ContactForm() {
       mensagem: formData.get("mensagem"),
     };
 
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-    setLoading(false);
+      if (!res.ok) {
+        setErroEnvio("Não foi possível enviar sua mensagem. Tente novamente.");
+        return;
+      }
 
-    if (res.ok) {
       setSucesso(true);
-      e.currentTarget.reset();
+
+      formElement.reset();
       setEstado("");
       setCidade("");
       setCidades([]);
       setBusca("");
+    } catch (error) {
+      console.error("Erro ao enviar formulário:", error);
+
+      setErroEnvio("Não foi possível conectar ao servidor. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -65,8 +96,9 @@ export default function ContactForm() {
     <section className="relative isolate bg-surface-muted px-6 py-24 sm:py-32 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="text-4xl font-semibold tracking-tight text-color-text sm:text-5xl">
-          Fale com a <span className="text-brand">Biarritz Turismo Sports</span>
+          Fale com <span className="text-brand">a Biarritz Turismo Sports</span>
         </h1>
+
         <p className="mt-4 text-lg text-muted">
           Preencha o formulário abaixo e nossa equipe entrará em contato.
         </p>
@@ -94,7 +126,7 @@ export default function ContactForm() {
           placeholder="+55 11 99999-9999"
         />
 
-        <div className="grid grid-cols-2 gap-x-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <EstadoSelect
             estados={estados}
             value={estado}
@@ -116,12 +148,22 @@ export default function ContactForm() {
           />
         </div>
 
-        <FormTextarea name="mensagem" label="Mensagem" rows={4} required />
+        <FormTextarea
+          name="mensagem"
+          label="Mensagem"
+          rows={4}
+          required
+          defaultValue={mensagemInicial}
+        />
 
         {sucesso && (
           <p className="text-center text-sm text-green-600">
             Mensagem enviada com sucesso!
           </p>
+        )}
+
+        {erroEnvio && (
+          <p className="text-center text-sm text-danger">{erroEnvio}</p>
         )}
 
         <button
@@ -130,8 +172,8 @@ export default function ContactForm() {
           className={`
             w-full rounded-md px-4 py-3 text-sm font-semibold
             ${
-              emailErro
-                ? "bg-brand-soft text-muted cursor-not-allowed"
+              loading || emailErro
+                ? "cursor-not-allowed bg-brand-soft text-muted"
                 : "bg-brand text-on-brand bg-brand-dark-hover focus-ring-brand"
             }
           `}

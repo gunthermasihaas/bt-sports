@@ -1,19 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { TipoFoto } from "@/generated/prisma";
+
 import PacoteView from "@/components/pacotes/PacoteView";
 
 type Props = {
-  params: { slug?: string };
+  params: Promise<{ slug: string }>;
 };
 
 export default async function PacotePage({ params }: Props) {
   const { slug } = await params;
 
-  const pacote = await prisma.pacote.findUnique({
-    where: { slug },
+  const pacote = await prisma.pacote.findFirst({
+    where: {
+      slug,
+      deleted_at: null,
+    },
     include: {
-      fotos: { orderBy: { ordem: "asc" } },
+      fotos: {
+        orderBy: {
+          ordem: "asc",
+        },
+      },
       categoria: true,
     },
   });
@@ -22,11 +30,11 @@ export default async function PacotePage({ params }: Props) {
     notFound();
   }
 
-  const capa = pacote.fotos.find((f) => f.tipo === TipoFoto.CAPA);
-  // const galeria = pacote.fotos.filter((f) => f.tipo !== TipoFoto.GALERIA);
+  const capa = pacote.fotos.find((foto) => foto.tipo === TipoFoto.CAPA);
 
   return (
     <PacoteView
+      slug={pacote.slug}
       nome={pacote.nome}
       categoria={pacote.categoria}
       data_inicio={pacote.data_inicio ?? undefined}
