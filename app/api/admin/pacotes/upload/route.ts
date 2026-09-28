@@ -47,6 +47,61 @@ function getFileExtension(fileName: string): string {
   return normalizedFileName.slice(lastDotIndex + 1);
 }
 
+function isValidImageSignature(buffer: ArrayBuffer, mimeType: string): boolean {
+  const bytes = new Uint8Array(buffer);
+
+  switch (mimeType) {
+    case "image/jpeg":
+      return (
+        bytes.length >= 3 &&
+        bytes[0] === 0xff &&
+        bytes[1] === 0xd8 &&
+        bytes[2] === 0xff
+      );
+
+    case "image/png":
+      return (
+        bytes.length >= 8 &&
+        bytes[0] === 0x89 &&
+        bytes[1] === 0x50 &&
+        bytes[2] === 0x4e &&
+        bytes[3] === 0x47 &&
+        bytes[4] === 0x0d &&
+        bytes[5] === 0x0a &&
+        bytes[6] === 0x1a &&
+        bytes[7] === 0x0a
+      );
+
+    case "image/webp":
+      return (
+        bytes.length >= 12 &&
+        bytes[0] === 0x52 &&
+        bytes[1] === 0x49 &&
+        bytes[2] === 0x46 &&
+        bytes[3] === 0x46 &&
+        bytes[8] === 0x57 &&
+        bytes[9] === 0x45 &&
+        bytes[10] === 0x42 &&
+        bytes[11] === 0x50
+      );
+
+    case "image/avif":
+      return (
+        bytes.length >= 12 &&
+        bytes[4] === 0x66 &&
+        bytes[5] === 0x74 &&
+        bytes[6] === 0x79 &&
+        bytes[7] === 0x70 &&
+        bytes[8] === 0x61 &&
+        bytes[9] === 0x76 &&
+        bytes[10] === 0x69 &&
+        bytes[11] === 0x66
+      );
+  }
+
+  return false;
+}
+
 function getTipoFoto(value: string): TipoFoto | null {
   const normalizedValue = value.trim().toUpperCase();
 
@@ -55,6 +110,14 @@ function getTipoFoto(value: string): TipoFoto | null {
   );
 
   return tipo ?? null;
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  return "code" in error && error.code === "P2002";
 }
 
 function getErrorMessage(error: unknown): string {
@@ -162,7 +225,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!ALLOWED_MIME_TYPES.has(fileEntry.type.toLowerCase())) {
+    const mimeType = fileEntry.type.toLowerCase();
+
+    if (!ALLOWED_MIME_TYPES.has(mimeType)) {
       return NextResponse.json(
         {
           error: "Formato de imagem não permitido",
@@ -179,6 +244,19 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: "Extensão de arquivo não permitida",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const fileBuffer = await fileEntry.arrayBuffer();
+
+    if (!isValidImageSignature(fileBuffer, mimeType)) {
+      return NextResponse.json(
+        {
+          error: "O conteúdo do arquivo não corresponde ao formato informado",
         },
         {
           status: 400,
@@ -282,19 +360,32 @@ export async function POST(req: Request) {
         }
       );
     } catch (databaseError) {
+      try {
+        await del(blob.url);
+        uploadedBlobUrl = null;
+      } catch (cleanupError) {
+        console.error(
+          "Erro ao remover Blob após falha no banco:",
+          getErrorMessage(cleanupError)
+        );
+      }
+
+      if (isUniqueConstraintError(databaseError)) {
+        return NextResponse.json(
+          {
+            error:
+              "Outra imagem deste tipo foi enviada simultaneamente. Tente novamente.",
+          },
+          {
+            status: 409,
+          }
+        );
+      }
+
       console.error(
         "Erro ao salvar registro da foto:",
         getErrorMessage(databaseError)
       );
-
-      try {
-        await del(blob.url);
-      } catch (cleanupError) {
-        console.error(
-          "Erro ao remover Blob órfão:",
-          getErrorMessage(cleanupError)
-        );
-      }
 
       return NextResponse.json(
         {

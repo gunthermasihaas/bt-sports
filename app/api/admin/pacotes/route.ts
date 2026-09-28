@@ -7,6 +7,16 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 import { pacoteSchema } from "@/app/(admin)/admin/(protected)/pacotes/novo/schema";
 
+const MAX_CREATE_ATTEMPTS = 3;
+
+function isUniqueConstraintError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  return "code" in error && error.code === "P2002";
+}
+
 export async function POST(req: Request) {
   const authorization = await requireAdmin();
 
@@ -49,49 +59,70 @@ export async function POST(req: Request) {
     }
 
     let slug = slugBase;
-    let count = 1;
 
-    while (await prisma.pacote.findUnique({ where: { slug } })) {
-      slug = `${slugBase}-${count++}`;
+    for (let attempt = 0; attempt < MAX_CREATE_ATTEMPTS; attempt++) {
+      if (attempt === 0) {
+        slug = slugBase;
+      } else {
+        slug = `${slugBase}-${attempt}`;
+      }
+
+      try {
+        while (await prisma.pacote.findUnique({ where: { slug } })) {
+          const suffix = Math.floor(Math.random() * 1_000_000);
+
+          slug = `${slugBase}-${suffix}`;
+        }
+
+        const pacote = await prisma.$transaction(async (tx) => {
+          if (data.destaque === true) {
+            await tx.pacote.updateMany({
+              where: {
+                destaque: true,
+                deleted_at: null,
+              },
+              data: {
+                destaque: false,
+              },
+            });
+          }
+
+          return tx.pacote.create({
+            data: {
+              nome: data.nome.trim(),
+              slug,
+              categoria_id: data.categoria_id,
+              data_inicio: dataInicio,
+              preco: data.preco,
+              moeda: data.moeda as Moeda,
+              texto_destaque: data.texto_destaque ?? null,
+              resumo: data.resumo ?? null,
+              descricao: data.descricao ?? null,
+              destaque: data.destaque === true,
+            },
+          });
+        });
+
+        return NextResponse.json(
+          {
+            pacote,
+          },
+          {
+            status: 201,
+          }
+        );
+      } catch (error) {
+        if (!isUniqueConstraintError(error)) {
+          throw error;
+        }
+
+        if (attempt === MAX_CREATE_ATTEMPTS - 1) {
+          throw error;
+        }
+      }
     }
 
-    const pacote = await prisma.$transaction(async (tx) => {
-      if (data.destaque === true) {
-        await tx.pacote.updateMany({
-          where: {
-            destaque: true,
-            deleted_at: null,
-          },
-          data: {
-            destaque: false,
-          },
-        });
-      }
-
-      return tx.pacote.create({
-        data: {
-          nome: data.nome.trim(),
-          slug,
-          categoria_id: data.categoria_id,
-          data_inicio: dataInicio,
-          preco: data.preco,
-          moeda: data.moeda as Moeda,
-          texto_destaque: data.texto_destaque ?? null,
-          resumo: data.resumo ?? null,
-          descricao: data.descricao ?? null,
-          destaque: data.destaque === true,
-        },
-      });
-    });
-
-    return NextResponse.json(
-      {
-        pacote,
-      },
-      {
-        status: 201,
-      }
-    );
+    throw new Error("Não foi possível criar o pacote");
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
