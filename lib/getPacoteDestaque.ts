@@ -9,19 +9,23 @@ export async function getPacoteDestaque() {
     },
     include: {
       fotos: {
-        where: { tipo: TipoFoto.BANNER },
+        where: {
+          tipo: TipoFoto.BANNER,
+        },
         take: 1,
       },
     },
   });
 
-  if (!pacote) return null;
+  if (!pacote) {
+    return null;
+  }
 
   return {
     id: pacote.id,
     nome: pacote.nome,
-    resumo: pacote.resumo,
-    preco: pacote.preco ? Number(pacote.preco) : undefined,
+    resumo: pacote.resumo ?? undefined,
+    preco: pacote.preco !== null ? Number(pacote.preco) : undefined,
     moeda: pacote.moeda,
     imageUrl: pacote.fotos[0]?.url,
     dataInicio: pacote.data_inicio,

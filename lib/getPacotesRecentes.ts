@@ -25,8 +25,8 @@ export async function getPacotesRecentes(limit = 6) {
     return pacotes.map((pacote) => ({
       id: pacote.id,
       nome: pacote.nome,
-      resumo: pacote.resumo,
-      preco: pacote.preco ? Number(pacote.preco) : undefined,
+      resumo: pacote.resumo ?? undefined,
+      preco: pacote.preco !== null ? Number(pacote.preco) : undefined,
       moeda: pacote.moeda,
       dataEvento: formatarDataCurta(pacote.data_inicio),
       imageUrl: pacote.fotos[0]?.url,

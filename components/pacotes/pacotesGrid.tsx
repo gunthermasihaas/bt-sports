@@ -1,6 +1,5 @@
 import PacoteCard from "@/components/pacotes/pacote-card";
-
-type Moeda = "EUR" | "USD" | "BRL" | "GBP";
+import type { Moeda } from "@/types/moedas";
 
 type Props = {
   pacotes: {

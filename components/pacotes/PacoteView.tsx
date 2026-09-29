@@ -1,17 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import Image from "next/image";
 import Link from "next/link";
+import { useMemo } from "react";
 
 import { formatarDataLonga } from "@/lib/formatarData";
+import { formatarPreco, type Moeda } from "@/types/moedas";
 
 type Categoria = {
   nome: string;
 };
-
-type Moeda = "EUR" | "USD" | "BRL" | "GBP";
 
 type Props = {
   slug: string;
@@ -25,22 +24,6 @@ type Props = {
   moeda?: Moeda;
   capaUrl?: string;
 };
-
-const moedaLocaleMap: Record<Moeda, string> = {
-  EUR: "pt-PT",
-  USD: "en-US",
-  BRL: "pt-BR",
-  GBP: "en-GB",
-};
-
-function formatarPreco(preco: number, moeda: Moeda) {
-  return new Intl.NumberFormat(moedaLocaleMap[moeda], {
-    style: "currency",
-    currency: moeda,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(preco);
-}
 
 export default function PacoteView({
   slug,
@@ -98,6 +81,8 @@ export default function PacoteView({
         "select",
         "style",
         "script",
+        "svg",
+        "math",
       ],
 
       FORBID_ATTR: [
@@ -121,7 +106,7 @@ export default function PacoteView({
       <div className="mx-auto max-w-5xl space-y-10">
         <section className="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
           <div className="relative aspect-4/3 overflow-hidden rounded-xl bg-surface-muted">
-            {capaUrl && (
+            {capaUrl ? (
               <Image
                 src={capaUrl}
                 alt={nome}
@@ -129,6 +114,10 @@ export default function PacoteView({
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted">
+                Sem imagem de capa
+              </div>
             )}
           </div>
 

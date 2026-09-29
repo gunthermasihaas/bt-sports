@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import PacoteCard from "@/components/pacotes/pacote-card";
 
-type Moeda = "EUR" | "USD" | "BRL" | "GBP";
+import type { Moeda } from "@/types/moedas";
 
 type Pacote = {
   id: number;
@@ -20,7 +20,9 @@ type Props = {
 };
 
 export default function PacotesRecentes({ pacotes }: Props) {
-  if (!pacotes.length) return null;
+  if (!pacotes.length) {
+    return null;
+  }
 
   return (
     <section className="bg-surface px-4 py-10 sm:px-6 sm:py-12">

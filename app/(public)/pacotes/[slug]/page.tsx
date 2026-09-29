@@ -1,8 +1,8 @@
-import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
 import { TipoFoto } from "@/generated/prisma";
+import { notFound } from "next/navigation";
 
 import PacoteView from "@/components/pacotes/PacoteView";
+import { prisma } from "@/lib/prisma";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -41,7 +41,7 @@ export default async function PacotePage({ params }: Props) {
       texto_destaque={pacote.texto_destaque ?? undefined}
       resumo={pacote.resumo ?? undefined}
       descricao={pacote.descricao ?? undefined}
-      preco={pacote.preco?.toNumber() ?? undefined}
+      preco={pacote.preco !== null ? pacote.preco.toNumber() : undefined}
       moeda={pacote.moeda}
       capaUrl={capa?.url}
     />

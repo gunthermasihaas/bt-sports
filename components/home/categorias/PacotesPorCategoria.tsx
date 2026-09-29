@@ -55,8 +55,9 @@ export default async function PacotesPorCategoria({ slug }: Props) {
             key={pacote.id}
             nome={pacote.nome}
             resumo={pacote.resumo ?? undefined}
-            preco={pacote.preco ? Number(pacote.preco) : undefined}
-            imageUrl={pacote.fotos[0]?.url ?? null}
+            preco={pacote.preco !== null ? Number(pacote.preco) : undefined}
+            moeda={pacote.moeda}
+            imageUrl={pacote.fotos[0]?.url}
             dataEvento={formatarDataCurta(pacote.data_inicio)}
             href={`/pacotes/${pacote.slug}`}
           />

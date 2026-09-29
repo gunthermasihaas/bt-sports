@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-type Moeda = "EUR" | "USD" | "BRL" | "GBP";
+import { formatarPreco, type Moeda } from "@/types/moedas";
 
 type Props = {
   slug: string;
@@ -13,22 +13,6 @@ type Props = {
   dataEvento?: string;
   bannerUrl?: string;
 };
-
-function formatarPreco(preco: number, moeda: Moeda) {
-  const locales: Record<Moeda, string> = {
-    EUR: "pt-PT",
-    USD: "en-US",
-    BRL: "pt-BR",
-    GBP: "en-GB",
-  };
-
-  return new Intl.NumberFormat(locales[moeda], {
-    style: "currency",
-    currency: moeda,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(preco);
-}
 
 export default function PacoteDestaque({
   slug,
@@ -53,7 +37,7 @@ export default function PacoteDestaque({
             w-full bg-surface-muted
           "
         >
-          {bannerUrl && (
+          {bannerUrl ? (
             <Image
               src={bannerUrl}
               alt={nome}
@@ -66,6 +50,10 @@ export default function PacoteDestaque({
                 group-hover:scale-[1.04]
               "
             />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-muted">
+              Sem imagem de destaque
+            </div>
           )}
 
           <div className="absolute inset-0 bg-black/40" />
@@ -104,7 +92,7 @@ export default function PacoteDestaque({
                     text-sm font-semibold text-on-brand
                   "
                 >
-                  {preco !== undefined && preco !== null
+                  {preco !== undefined
                     ? `A partir de ${formatarPreco(preco, moeda)}`
                     : "Sob consulta"}
                 </span>

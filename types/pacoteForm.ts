@@ -1,4 +1,6 @@
-export type Moeda = "EUR" | "USD" | "BRL" | "GBP";
+import type { Moeda } from "@/types/moedas";
+
+export type { Moeda };
 
 export type PacoteFormState = {
   nome: string;

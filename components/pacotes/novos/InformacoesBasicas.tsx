@@ -2,11 +2,11 @@
 
 import React from "react";
 import { toast } from "sonner";
-import { Moeda } from "@/generated/prisma";
 
 import Section from "./Section";
 import Field from "./Field";
 import { PacoteFormState } from "@/types/pacoteForm";
+import { MOEDAS, type Moeda } from "@/types/moedas";
 
 const inputBase =
   "mt-2 w-full rounded-md bg-surface px-3.5 py-2 border border-default text-admin focus-ring-brand";
@@ -34,7 +34,7 @@ type Props = {
   ) => void;
 };
 
-const moedas: Moeda[] = [Moeda.EUR, Moeda.USD, Moeda.BRL, Moeda.GBP];
+const moedas = MOEDAS;
 
 export default function InformacoesBasicas({
   categorias,
@@ -56,7 +56,7 @@ export default function InformacoesBasicas({
   function handleMoedaChange(event: React.ChangeEvent<HTMLSelectElement>) {
     const value = event.target.value;
 
-    if (Object.values(Moeda).includes(value as Moeda)) {
+    if (MOEDAS.includes(value as Moeda)) {
       onChange("moeda", value as PacoteFormState["moeda"]);
     }
   }
