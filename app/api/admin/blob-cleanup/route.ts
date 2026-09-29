@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { del, list } from "@vercel/blob";
+import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/require-role";
@@ -14,13 +14,25 @@ type BlobItem = {
   size: number;
 };
 
-type AuditResult = {
-  totalBlobs: number;
-  totalFotosNoBanco: number;
-  totalOrfaos: number;
-  tamanhoTotalBytes: number;
-  orfaos: BlobItem[];
-};
+function extractUrlsFromHtml(html: string | null): string[] {
+  if (!html) {
+    return [];
+  }
+
+  const urls = new Set<string>();
+
+  const srcRegex = /\bsrc\s*=\s*["']([^"']+)["']/gi;
+
+  for (const match of html.matchAll(srcRegex)) {
+    const url = match[1]?.trim();
+
+    if (url) {
+      urls.add(url);
+    }
+  }
+
+  return [...urls];
+}
 
 async function listAllPackageBlobs(): Promise<BlobItem[]> {
   const blobs: BlobItem[] = [];
@@ -42,41 +54,6 @@ async function listAllPackageBlobs(): Promise<BlobItem[]> {
   return blobs;
 }
 
-async function auditOrphanBlobs(): Promise<AuditResult> {
-  const [blobs, fotos] = await Promise.all([
-    listAllPackageBlobs(),
-
-    prisma.foto.findMany({
-      select: {
-        url: true,
-      },
-    }),
-  ]);
-
-  const urlsEmUso = new Set(fotos.map((foto) => foto.url));
-  const limiteData = Date.now() - MIN_AGE_MS;
-
-  const orfaos = blobs.filter((blob) => {
-    const idadeSegura = blob.uploadedAt.getTime() < limiteData;
-    const naoEstaNoBanco = !urlsEmUso.has(blob.url);
-
-    return idadeSegura && naoEstaNoBanco;
-  });
-
-  const tamanhoTotalBytes = orfaos.reduce(
-    (total, blob) => total + blob.size,
-    0
-  );
-
-  return {
-    totalBlobs: blobs.length,
-    totalFotosNoBanco: fotos.length,
-    totalOrfaos: orfaos.length,
-    tamanhoTotalBytes,
-    orfaos,
-  };
-}
-
 export async function GET() {
   const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
@@ -85,11 +62,54 @@ export async function GET() {
   }
 
   try {
-    const audit = await auditOrphanBlobs();
+    const [blobs, fotos, pacotes] = await Promise.all([
+      listAllPackageBlobs(),
+
+      prisma.foto.findMany({
+        select: {
+          url: true,
+        },
+      }),
+
+      prisma.pacote.findMany({
+        select: {
+          descricao: true,
+        },
+      }),
+    ]);
+
+    const urlsEmUso = new Set<string>();
+
+    for (const foto of fotos) {
+      urlsEmUso.add(foto.url);
+    }
+
+    for (const pacote of pacotes) {
+      for (const url of extractUrlsFromHtml(pacote.descricao)) {
+        urlsEmUso.add(url);
+      }
+    }
+
+    const limiteData = Date.now() - MIN_AGE_MS;
+
+    const orfaos = blobs.filter((blob) => {
+      const idadeSegura = blob.uploadedAt.getTime() < limiteData;
+      const naoEstaNoBanco = !urlsEmUso.has(blob.url);
+
+      return idadeSegura && naoEstaNoBanco;
+    });
+
+    const tamanhoTotal = orfaos.reduce((total, blob) => total + blob.size, 0);
 
     return NextResponse.json({
       success: true,
-      ...audit,
+      totalBlobs: blobs.length,
+      totalFotosNoBanco: fotos.length,
+      totalPacotesComDescricao: pacotes.length,
+      totalUrlsEmUso: urlsEmUso.size,
+      totalOrfaos: orfaos.length,
+      tamanhoTotalBytes: tamanhoTotal,
+      orfaos,
     });
   } catch (error) {
     console.error("GET /api/admin/blob-cleanup", error);
@@ -106,16 +126,51 @@ export async function GET() {
 }
 
 export async function POST() {
-  const authorization = await requireRole(["ADMIN"]);
+  const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
   if (!authorization.authorized) {
     return authorization.response;
   }
 
   try {
-    const audit = await auditOrphanBlobs();
+    const [blobs, fotos, pacotes] = await Promise.all([
+      listAllPackageBlobs(),
 
-    if (audit.orfaos.length === 0) {
+      prisma.foto.findMany({
+        select: {
+          url: true,
+        },
+      }),
+
+      prisma.pacote.findMany({
+        select: {
+          descricao: true,
+        },
+      }),
+    ]);
+
+    const urlsEmUso = new Set<string>();
+
+    for (const foto of fotos) {
+      urlsEmUso.add(foto.url);
+    }
+
+    for (const pacote of pacotes) {
+      for (const url of extractUrlsFromHtml(pacote.descricao)) {
+        urlsEmUso.add(url);
+      }
+    }
+
+    const limiteData = Date.now() - MIN_AGE_MS;
+
+    const orfaos = blobs.filter((blob) => {
+      const idadeSegura = blob.uploadedAt.getTime() < limiteData;
+      const naoEstaNoBanco = !urlsEmUso.has(blob.url);
+
+      return idadeSegura && naoEstaNoBanco;
+    });
+
+    if (orfaos.length === 0) {
       return NextResponse.json({
         success: true,
         deleted: 0,
@@ -123,14 +178,11 @@ export async function POST() {
       });
     }
 
-    const urls = audit.orfaos.map((blob) => blob.url);
-
-    await del(urls);
+    await del(orfaos.map((blob) => blob.url));
 
     return NextResponse.json({
       success: true,
-      deleted: urls.length,
-      deletedBytes: audit.tamanhoTotalBytes,
+      deleted: orfaos.length,
     });
   } catch (error) {
     console.error("POST /api/admin/blob-cleanup", error);

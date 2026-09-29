@@ -47,8 +47,6 @@ export async function GET() {
         id: true,
         nome: true,
         slug: true,
-        created_at: true,
-        updated_at: true,
       },
     });
 
@@ -76,6 +74,7 @@ export async function POST(req: Request) {
 
   try {
     const body: unknown = await req.json();
+
     const result = categoriaSchema.safeParse(body);
 
     if (!result.success) {
@@ -96,7 +95,7 @@ export async function POST(req: Request) {
     if (!slug) {
       return NextResponse.json(
         {
-          error: "Não foi possível gerar um slug válido",
+          error: "Não foi possível gerar um slug válido para a categoria",
         },
         {
           status: 400,
@@ -143,8 +142,6 @@ export async function POST(req: Request) {
         id: true,
         nome: true,
         slug: true,
-        created_at: true,
-        updated_at: true,
       },
     });
 

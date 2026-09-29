@@ -6,7 +6,7 @@ import InformacoesBasicas from "@/components/pacotes/novos/InformacoesBasicas";
 import ImagensPacote from "@/components/pacotes/novos/ImagensPacote";
 import ConteudoPacote from "@/components/pacotes/novos/ConteudoPacote";
 import StickyActions from "@/components/pacotes/novos/StickyActions";
-import PacoteView from "@/components/pacotes/PacoteView";
+import PacotePreview from "@/components/pacotes/novos/PacotePreview";
 import { PacoteFormState } from "@/types/pacoteForm";
 import { toast } from "sonner";
 
@@ -263,9 +263,8 @@ export default function NovoPacotePage() {
           />
 
           <div className="overflow-hidden rounded-xl border border-default">
-            <PacoteView
-              slug="preview"
-              nome={formData.nome || "Nome do pacote"}
+            <PacotePreview
+              nome={formData.nome}
               categoria={
                 categoriaAtual
                   ? {
@@ -273,12 +272,12 @@ export default function NovoPacotePage() {
                     }
                   : undefined
               }
-              data_inicio={
+              dataInicio={
                 formData.data_inicio
                   ? new Date(formData.data_inicio)
                   : undefined
               }
-              texto_destaque={formData.texto_destaque}
+              textoDestaque={formData.texto_destaque}
               resumo={formData.resumo}
               descricao={formData.descricao}
               preco={formData.preco}

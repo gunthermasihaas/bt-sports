@@ -63,6 +63,30 @@ export default function PacoteView({
       USE_PROFILES: {
         html: true,
       },
+
+      ALLOWED_TAGS: [
+        "p",
+        "br",
+        "strong",
+        "b",
+        "em",
+        "i",
+        "u",
+        "s",
+        "code",
+        "h1",
+        "h2",
+        "h3",
+        "ul",
+        "ol",
+        "li",
+        "blockquote",
+        "a",
+        "img",
+      ],
+
+      ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "title"],
+
       FORBID_TAGS: [
         "iframe",
         "object",
@@ -75,7 +99,16 @@ export default function PacoteView({
         "style",
         "script",
       ],
-      FORBID_ATTR: ["style", "onerror", "onload", "onclick", "onmouseover"],
+
+      FORBID_ATTR: [
+        "style",
+        "onerror",
+        "onload",
+        "onclick",
+        "onmouseover",
+        "onfocus",
+        "onblur",
+      ],
     });
   }, [descricao]);
 

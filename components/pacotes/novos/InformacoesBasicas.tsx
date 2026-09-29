@@ -2,6 +2,7 @@
 
 import React from "react";
 import { toast } from "sonner";
+import { Moeda } from "@/generated/prisma";
 
 import Section from "./Section";
 import Field from "./Field";
@@ -33,6 +34,8 @@ type Props = {
   ) => void;
 };
 
+const moedas: Moeda[] = [Moeda.EUR, Moeda.USD, Moeda.BRL, Moeda.GBP];
+
 export default function InformacoesBasicas({
   categorias,
   setCategorias,
@@ -48,6 +51,14 @@ export default function InformacoesBasicas({
     const value = event.target.value;
 
     onCategoriaChange(value === "" ? "" : Number(value));
+  }
+
+  function handleMoedaChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const value = event.target.value;
+
+    if (Object.values(Moeda).includes(value as Moeda)) {
+      onChange("moeda", value as PacoteFormState["moeda"]);
+    }
   }
 
   async function handleCriarCategoria() {
@@ -226,24 +237,14 @@ export default function InformacoesBasicas({
         <Field label="Moeda">
           <select
             value={valores.moeda}
-            onChange={(event) => {
-              const value = event.target.value;
-
-              if (
-                value === "EUR" ||
-                value === "USD" ||
-                value === "BRL" ||
-                value === "GBP"
-              ) {
-                onChange("moeda", value);
-              }
-            }}
+            onChange={handleMoedaChange}
             className={inputBase}
           >
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-            <option value="BRL">BRL</option>
-            <option value="GBP">GBP</option>
+            {moedas.map((moeda) => (
+              <option key={moeda} value={moeda}>
+                {moeda}
+              </option>
+            ))}
           </select>
         </Field>
       </div>

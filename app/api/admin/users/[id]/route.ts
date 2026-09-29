@@ -24,6 +24,7 @@ const updateUserSchema = z.object({
 
   password: z
     .string()
+    .min(12, "A senha deve ter pelo menos 12 caracteres")
     .max(128, "A senha deve ter no máximo 128 caracteres")
     .optional()
     .or(z.literal("")),
@@ -108,13 +109,6 @@ export async function PATCH(req: Request, context: RouteContext) {
     const isProtectedUser =
       existingUser.email.toLowerCase() === PROTECTED_ADMIN_EMAIL;
 
-    /*
-     * A conta principal é imutável em relação a:
-     * - e-mail
-     * - role
-     *
-     * Nome e senha continuam podendo ser alterados.
-     */
     if (isProtectedUser) {
       if (email !== PROTECTED_ADMIN_EMAIL) {
         return NextResponse.json(
@@ -140,6 +134,25 @@ export async function PATCH(req: Request, context: RouteContext) {
       }
     }
 
+    if (existingUser.role === "ADMIN" && role !== "ADMIN") {
+      const totalAdmins = await prisma.user.count({
+        where: {
+          role: "ADMIN",
+        },
+      });
+
+      if (totalAdmins <= 1) {
+        return NextResponse.json(
+          {
+            error: "Não é possível remover o último administrador",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+    }
+
     const data: {
       name: string;
       email: string;
@@ -151,10 +164,6 @@ export async function PATCH(req: Request, context: RouteContext) {
       role: isProtectedUser ? "ADMIN" : role,
     };
 
-    /*
-     * Senha vazia = mantém a senha atual.
-     * Senha preenchida = substitui a senha atual.
-     */
     if (password && password.trim().length > 0) {
       data.password = await bcrypt.hash(password, 12);
     }
@@ -269,9 +278,32 @@ export async function DELETE(_req: Request, context: RouteContext) {
       );
     }
 
-    const totalUsers = await prisma.user.count();
+    if (user.role === "ADMIN") {
+      const totalAdmins = await prisma.user.count({
+        where: {
+          role: "ADMIN",
+        },
+      });
 
-    if (totalUsers <= 1) {
+      if (totalAdmins <= 1) {
+        return NextResponse.json(
+          {
+            error: "Não é possível excluir o último administrador",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+    }
+
+    const totalAdmins = await prisma.user.count({
+      where: {
+        role: "ADMIN",
+      },
+    });
+
+    if (user.role === "ADMIN" && totalAdmins <= 1) {
       return NextResponse.json(
         {
           error: "Não é possível excluir o último administrador",
