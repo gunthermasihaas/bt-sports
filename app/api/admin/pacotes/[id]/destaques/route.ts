@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireRole } from "@/lib/require-role";
 
 type RouteContext = {
   params: Promise<{
@@ -24,7 +24,7 @@ function parsePacoteId(id?: string) {
 }
 
 export async function PATCH(req: Request, context: RouteContext) {
-  const authorization = await requireAdmin();
+  const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
   if (!authorization.authorized) {
     return authorization.response;

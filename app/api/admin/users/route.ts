@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireRole } from "@/lib/require-role";
 
 const createUserSchema = z.object({
   name: z
@@ -36,7 +36,7 @@ function isUniqueConstraintError(error: unknown): boolean {
 }
 
 export async function GET() {
-  const authorization = await requireAdmin();
+  const authorization = await requireRole(["ADMIN"]);
 
   if (!authorization.authorized) {
     return authorization.response;
@@ -73,7 +73,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const authorization = await requireAdmin();
+  const authorization = await requireRole(["ADMIN"]);
 
   if (!authorization.authorized) {
     return authorization.response;

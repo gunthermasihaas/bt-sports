@@ -12,7 +12,10 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated" && session.user.role === "ADMIN") {
+    if (
+      status === "authenticated" &&
+      (session.user.role === "ADMIN" || session.user.role === "EDITOR")
+    ) {
       router.replace("/admin");
     }
   }, [status, session, router]);

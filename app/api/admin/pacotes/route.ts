@@ -4,8 +4,8 @@ import { ZodError } from "zod";
 import slugify from "slugify";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/require-admin";
 import { pacoteSchema } from "@/app/(admin)/admin/(protected)/pacotes/novo/schema";
+import { requireRole } from "@/lib/require-role";
 
 const MAX_CREATE_ATTEMPTS = 3;
 
@@ -18,7 +18,7 @@ function isUniqueConstraintError(error: unknown): boolean {
 }
 
 export async function POST(req: Request) {
-  const authorization = await requireAdmin();
+  const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
   if (!authorization.authorized) {
     return authorization.response;

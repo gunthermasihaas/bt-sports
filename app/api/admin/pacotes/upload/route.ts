@@ -3,7 +3,7 @@ import { del, put } from "@vercel/blob";
 
 import { TipoFoto } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireRole } from "@/lib/require-role";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -129,7 +129,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 export async function POST(req: Request) {
-  const authorization = await requireAdmin();
+  const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
   if (!authorization.authorized) {
     return authorization.response;

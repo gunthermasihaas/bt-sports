@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { del, list } from "@vercel/blob";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireRole } from "@/lib/require-role";
 
 const BATCH_SIZE = 1000;
 const MIN_AGE_MS = 24 * 60 * 60 * 1000;
@@ -35,7 +35,7 @@ async function listAllPackageBlobs(): Promise<BlobItem[]> {
 }
 
 export async function GET() {
-  const authorization = await requireAdmin();
+  const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
   if (!authorization.authorized) {
     return authorization.response;
@@ -88,7 +88,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const authorization = await requireAdmin();
+  const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
   if (!authorization.authorized) {
     return authorization.response;

@@ -1,12 +1,79 @@
 "use client";
 
 import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+
 import { HeaderShell } from "../header/HeaderShell";
 import { MobileMenu } from "../header/MobileMenu";
 import { DesktopNav } from "../header/DesktopNav";
 
 export default function HeaderAdmin() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return null;
+  }
+
+  const role = session?.user?.role;
+
+  const isAdmin = role === "ADMIN";
+  const isEditor = role === "EDITOR";
+
+  if (!isAdmin && !isEditor) {
+    return null;
+  }
+
+  const logout = () => {
+    void signOut({
+      callbackUrl: "/admin/login",
+    });
+  };
+
+  const siteLinks = [
+    {
+      label: "Sobre nós",
+      href: "/sobre",
+      className: "text-sm font-semibold text-muted text-brand-hover",
+    },
+    {
+      label: "Pacotes",
+      href: "/admin/pacotes",
+      className: "text-sm font-semibold text-muted text-brand-hover",
+    },
+    {
+      label: "Categorias",
+      href: "/admin/categorias",
+      className: "text-sm font-semibold text-muted text-brand-hover",
+    },
+    {
+      label: "Contato",
+      href: "/contato",
+      className: "text-sm font-semibold text-muted text-brand-hover",
+    },
+  ];
+
+  const administrationLinks = [
+    {
+      label: "Dashboard",
+      href: "/admin",
+      className: "text-sm font-semibold text-muted text-brand-hover",
+    },
+    ...(isAdmin
+      ? [
+          {
+            label: "Usuários",
+            href: "/admin/users",
+            className: "text-sm font-semibold text-muted text-brand-hover",
+          },
+        ]
+      : []),
+    {
+      label: "Logout",
+      onClick: logout,
+      className: "text-sm font-semibold text-danger text-danger-hover",
+    },
+  ];
+
   return (
     <HeaderShell
       bgClass="bg-admin"
@@ -34,13 +101,13 @@ export default function HeaderAdmin() {
                   className: "block text-admin-hover",
                 },
                 {
-                  label: "Contato",
-                  href: "/contato",
+                  label: "Categorias",
+                  href: "/admin/categorias",
                   className: "block text-admin-hover",
                 },
                 {
-                  label: "Categorias",
-                  href: "/admin/categorias",
+                  label: "Contato",
+                  href: "/contato",
                   className: "block text-admin-hover",
                 },
               ],
@@ -53,14 +120,20 @@ export default function HeaderAdmin() {
                   href: "/admin",
                   className: "block text-admin-hover",
                 },
-                {
-                  label: "Usuários",
-                  href: "/admin/users",
-                  className: "block text-admin-hover",
-                },
+
+                ...(isAdmin
+                  ? [
+                      {
+                        label: "Usuários",
+                        href: "/admin/users",
+                        className: "block text-admin-hover",
+                      },
+                    ]
+                  : []),
+
                 {
                   label: "Logout",
-                  onClick: () => signOut({ callbackUrl: "/admin/login" }),
+                  onClick: logout,
                   className:
                     "block w-full text-left text-danger text-danger-hover",
                 },
@@ -70,46 +143,8 @@ export default function HeaderAdmin() {
         />
       }
     >
-      <div className="hidden lg:flex gap-x-6 items-center">
-        <DesktopNav
-          links={[
-            {
-              label: "Sobre nós",
-              href: "/sobre",
-              className: "text-sm font-semibold text-muted text-brand-hover",
-            },
-            {
-              label: "Pacotes",
-              href: "/admin/pacotes",
-              className: "text-sm font-semibold text-muted text-brand-hover",
-            },
-            {
-              label: "Categorias",
-              href: "/admin/categorias",
-              className: "text-sm font-semibold text-muted text-brand-hover",
-            },
-            {
-              label: "Contato",
-              href: "/contato",
-              className: "text-sm font-semibold text-muted text-brand-hover",
-            },
-            {
-              label: "Dashboard",
-              href: "/admin",
-              className: "block text-admin-hover",
-            },
-            {
-              label: "Usuários",
-              href: "/admin/users",
-              className: "block text-admin-hover",
-            },
-            {
-              label: "Logout",
-              onClick: () => signOut({ callbackUrl: "/admin/login" }),
-              className: "text-sm font-semibold  text-danger text-danger-hover",
-            },
-          ]}
-        />
+      <div className="hidden items-center gap-x-6 lg:flex">
+        <DesktopNav links={[...siteLinks, ...administrationLinks]} />
       </div>
     </HeaderShell>
   );

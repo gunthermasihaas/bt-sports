@@ -3,7 +3,7 @@ import { Prisma } from "@/generated/prisma";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireRole } from "@/lib/require-role";
 
 const categoriaSchema = z.object({
   nome: z
@@ -32,7 +32,7 @@ function isUniqueConstraintError(error: unknown): boolean {
 }
 
 export async function GET() {
-  const authorization = await requireAdmin();
+  const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
   if (!authorization.authorized) {
     return authorization.response;
@@ -68,7 +68,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const authorization = await requireAdmin();
+  const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
   if (!authorization.authorized) {
     return authorization.response;
