@@ -40,7 +40,7 @@ export async function requireAdmin(): Promise<RequireAdminResult> {
     };
   }
 
-  if (session.user.role !== "admin") {
+  if (session.user.role !== "ADMIN") {
     return {
       authorized: false,
       response: NextResponse.json(
