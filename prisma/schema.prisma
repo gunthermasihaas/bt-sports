@@ -1,29 +1,12 @@
 generator client {
-  provider   = "prisma-client-js"
-  output     = "../generated/prisma"
-  engineType = "client"
+  provider        = "prisma-client-js"
+  output          = "../generated/prisma"
+  previewFeatures = ["partialIndexes"]
+  engineType      = "client"
 }
 
 datasource db {
   provider = "postgresql"
-}
-
-enum TipoFoto {
-  CAPA
-  GALERIA
-  CARD
-  BANNER
-}
-
-enum Moeda {
-  EUR
-  USD
-  BRL
-  GBP
-}
-
-enum UserRole {
-  ADMIN
 }
 
 model Contato {
@@ -45,40 +28,31 @@ model CategoriaViagem {
   id         Int      @id @default(autoincrement())
   nome       String   @unique @db.VarChar(100)
   slug       String   @unique @db.VarChar(100)
-
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt @db.Timestamp(6)
-
-  pacotes Pacote[]
+  pacotes    Pacote[]
 
   @@map("categorias_viagem")
 }
 
 model Pacote {
-  id             Int       @id @default(autoincrement())
-  nome           String    @db.VarChar(255)
-  slug           String    @unique @db.VarChar(255)
-
-  data_inicio    DateTime? @db.Date
-  preco          Decimal?  @db.Decimal(10, 2)
-  moeda          Moeda     @default(EUR)
-
+  id             Int             @id @default(autoincrement())
+  nome           String          @db.VarChar(255)
+  slug           String          @unique @db.VarChar(255)
+  data_inicio    DateTime?       @db.Date
+  preco          Decimal?        @db.Decimal(10, 2)
   texto_destaque String?
   resumo         String?
   descricao      String?
-
-  destaque       Boolean   @default(false)
-
+  destaque       Boolean         @unique(map: "pacotes_unico_destaque_ativo_idx", where: raw("((destaque = true) AND (deleted_at IS NULL))")) @default(false)
   categoria_id   Int
-
-  created_at     DateTime  @default(now()) @db.Timestamp(6)
-  updated_at     DateTime  @updatedAt @db.Timestamp(6)
+  created_at     DateTime        @default(now()) @db.Timestamp(6)
+  updated_at     DateTime        @updatedAt @db.Timestamp(6)
   deleted_at     DateTime?
-
-  categoria CategoriaViagem @relation(fields: [categoria_id], references: [id], onDelete: Restrict)
-
-  fotos        Foto[]
-  depoimentos Depoimento[]
+  moeda          Moeda           @default(EUR)
+  depoimentos    Depoimento[]
+  fotos          Foto[]
+  categoria      CategoriaViagem @relation(fields: [categoria_id], references: [id])
 
   @@index([categoria_id])
   @@index([destaque])
@@ -93,12 +67,11 @@ model Foto {
   descricao  String?
   ordem      Int      @default(0)
   tipo       TipoFoto @default(GALERIA)
-
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt @db.Timestamp(6)
+  pacote     Pacote   @relation(fields: [pacote_id], references: [id], onDelete: Cascade)
 
-  pacote Pacote @relation(fields: [pacote_id], references: [id], onDelete: Cascade)
-
+  @@unique([pacote_id, tipo], map: "fotos_unica_imagem_principal_idx", where: raw("(tipo = ANY (ARRAY['CAPA'::\"TipoFoto\", 'CARD'::\"TipoFoto\", 'BANNER'::\"TipoFoto\"]))"))
   @@index([pacote_id])
   @@index([pacote_id, tipo])
   @@index([pacote_id, ordem])
@@ -110,32 +83,27 @@ model Depoimento {
   nome       String    @db.VarChar(255)
   texto      String
   data       DateTime? @db.Date
-
   pacote_id  Int
-
   created_at DateTime  @default(now()) @db.Timestamp(6)
   updated_at DateTime  @updatedAt @db.Timestamp(6)
+  pacote     Pacote    @relation(fields: [pacote_id], references: [id], onDelete: Cascade)
 
-  pacote Pacote @relation(fields: [pacote_id], references: [id], onDelete: Cascade)
-
+  @@unique([pacote_id, nome])
   @@index([pacote_id])
   @@index([data])
-  @@unique([pacote_id, nome])
   @@map("depoimentos")
 }
 
 model User {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   name       String?
-  email      String   @unique
+  email      String    @unique
   password   String
-  role       UserRole @default(ADMIN)
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt @db.Timestamp(6)
-
-  accounts Account[]
-  sessions Session[]
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @updatedAt @db.Timestamp(6)
+  role       UserRole  @default(ADMIN)
+  accounts   Account[]
+  sessions   Session[]
 }
 
 model Account {
@@ -144,7 +112,6 @@ model Account {
   type              String
   provider          String
   provideraccountid String
-
   refresh_token     String?
   access_token      String?
   expires_at        Int?
@@ -152,8 +119,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userid], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userid], references: [id], onDelete: Cascade)
 
   @@unique([provider, provideraccountid])
 }
@@ -163,8 +129,7 @@ model Session {
   sessiontoken String   @unique
   userid       String
   expires      DateTime @db.Timestamp(6)
-
-  user User @relation(fields: [userid], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userid], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -173,4 +138,22 @@ model VerificationToken {
   expires    DateTime @db.Timestamp(6)
 
   @@unique([identifier, token])
+}
+
+enum TipoFoto {
+  CAPA
+  GALERIA
+  CARD
+  BANNER
+}
+
+enum Moeda {
+  EUR
+  USD
+  BRL
+  GBP
+}
+
+enum UserRole {
+  ADMIN
 }

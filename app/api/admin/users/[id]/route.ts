@@ -20,16 +20,11 @@ const updateUserSchema = z.object({
     .email("E-mail inválido")
     .max(255, "E-mail muito longo"),
 
-  /*
-   * Durante a edição:
-   *
-   * senha ausente/vazia = mantém a senha atual
-   * senha preenchida = altera a senha
-   */
   password: z
     .string()
     .max(128, "A senha deve ter no máximo 128 caracteres")
-    .optional(),
+    .optional()
+    .or(z.literal("")),
 });
 
 function isUniqueConstraintError(error: unknown): boolean {
@@ -113,21 +108,12 @@ export async function PATCH(req: Request, context: RouteContext) {
       email,
     };
 
-    const normalizedPassword = password?.trim();
-
-    if (normalizedPassword) {
-      if (normalizedPassword.length < 12) {
-        return NextResponse.json(
-          {
-            error: "A senha deve ter pelo menos 12 caracteres",
-          },
-          {
-            status: 400,
-          }
-        );
-      }
-
-      data.password = await bcrypt.hash(normalizedPassword, 12);
+    /*
+     * Senha vazia = mantém a senha atual.
+     * Senha preenchida = substitui a senha atual.
+     */
+    if (password && password.trim().length > 0) {
+      data.password = await bcrypt.hash(password, 12);
     }
 
     const updatedUser = await prisma.user.update({
@@ -171,7 +157,7 @@ export async function PATCH(req: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(req: Request, context: RouteContext) {
+export async function DELETE(_req: Request, context: RouteContext) {
   const authorization = await requireAdmin();
 
   if (!authorization.authorized) {

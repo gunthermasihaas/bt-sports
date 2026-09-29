@@ -12,6 +12,55 @@ import UsersSkeleton from "./UsersSkeleton";
 import UsersEmptyState from "./UsersEmptyState";
 import { EMPTY_USER_FORM, User, UserFormData } from "./user-types";
 
+type ApiErrorResponse = {
+  error?: string;
+  details?: Record<string, string[]>;
+};
+
+async function parseApiResponse<T>(
+  response: Response
+): Promise<T | ApiErrorResponse> {
+  const text = await response.text();
+
+  if (!text.trim()) {
+    if (!response.ok) {
+      throw new Error(
+        `Erro na API (${response.status} ${response.statusText})`
+      );
+    }
+
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T | ApiErrorResponse;
+  } catch {
+    if (!response.ok) {
+      throw new Error(
+        `Erro na API (${response.status} ${response.statusText})`
+      );
+    }
+
+    throw new Error("A API retornou uma resposta inválida.");
+  }
+}
+
+function getApiErrorMessage(data: ApiErrorResponse, fallback: string): string {
+  if (data.error) {
+    return data.error;
+  }
+
+  if (data.details) {
+    const firstFieldError = Object.values(data.details).flat()[0];
+
+    if (firstFieldError) {
+      return firstFieldError;
+    }
+  }
+
+  return fallback;
+}
+
 export default function UsersPageClient() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,19 +80,28 @@ export default function UsersPageClient() {
       setLoading(true);
 
       const response = await fetch("/api/admin/users", {
+        method: "GET",
         cache: "no-store",
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse<User[]>(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao carregar usuários");
+        throw new Error(
+          getApiErrorMessage(
+            data as ApiErrorResponse,
+            "Erro ao carregar usuários"
+          )
+        );
       }
 
+      if (!Array.isArray(data)) {
+        throw new Error("Resposta inválida ao carregar usuários.");
+      }
+
+      console.log("USERS RECEBIDOS DA API:", data);
       setUsers(data);
     } catch (error) {
-      console.error("Erro ao carregar usuários:", error);
-
       const message =
         error instanceof Error ? error.message : "Erro ao carregar usuários";
 
@@ -65,27 +123,29 @@ export default function UsersPageClient() {
     }
 
     return users.filter((user) => {
-      const name = user.name?.toLowerCase() ?? "";
-      const email = user.email.toLowerCase();
-      const role = user.role.toLowerCase();
-
       return (
-        name.includes(normalizedSearch) ||
-        email.includes(normalizedSearch) ||
-        role.includes(normalizedSearch)
+        user.name?.toLowerCase().includes(normalizedSearch) ||
+        user.email.toLowerCase().includes(normalizedSearch) ||
+        user.role.toLowerCase().includes(normalizedSearch)
       );
     });
   }, [users, search]);
 
   function openCreateModal() {
     setEditingUser(null);
-    setFormData({
-      ...EMPTY_USER_FORM,
-    });
+    setFormData(EMPTY_USER_FORM);
     setFormOpen(true);
   }
 
   function openEditModal(user: User) {
+    console.log("USER RECEBIDO PARA EDIÇÃO:", user);
+    console.log("USER ID:", JSON.stringify(user.id));
+
+    if (!user.id) {
+      toast.error("Erro: usuário sem ID.");
+      return;
+    }
+
     setEditingUser(user);
 
     setFormData({
@@ -104,71 +164,93 @@ export default function UsersPageClient() {
 
     setFormOpen(false);
     setEditingUser(null);
-    setFormData({
-      ...EMPTY_USER_FORM,
-    });
+    setFormData(EMPTY_USER_FORM);
   }
 
   async function handleSave() {
-    if (saving) {
-      return;
-    }
-
     try {
       setSaving(true);
 
-      const editing = editingUser !== null;
+      if (editingUser) {
+        if (!editingUser.id) {
+          throw new Error(
+            "Não foi possível identificar o usuário que está sendo editado."
+          );
+        }
 
-      const payload = editing
-        ? {
-            name: formData.name.trim(),
-            email: formData.email.trim(),
-            ...(formData.password.trim()
-              ? {
-                  password: formData.password,
-                }
-              : {}),
-          }
-        : {
-            name: formData.name.trim(),
-            email: formData.email.trim(),
-            password: formData.password,
-          };
+        const payload: {
+          name: string;
+          email: string;
+          password?: string;
+        } = {
+          name: formData.name,
+          email: formData.email,
+        };
 
-      const url = editing
-        ? `/api/admin/users/${editingUser.id}`
-        : "/api/admin/users";
+        /*
+         * Na edição:
+         *
+         * senha vazia = mantém a senha atual
+         * senha preenchida = altera a senha
+         */
+        if (formData.password.trim()) {
+          payload.password = formData.password;
+        }
 
-      const response = await fetch(url, {
-        method: editing ? "PATCH" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+        const userId = encodeURIComponent(editingUser.id);
 
-      const data = await response.json();
+        const response = await fetch(`/api/admin/users/${userId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao salvar usuário");
+        const data = await parseApiResponse<User | ApiErrorResponse>(response);
+
+        if (!response.ok) {
+          throw new Error(
+            getApiErrorMessage(
+              data as ApiErrorResponse,
+              "Erro ao atualizar usuário"
+            )
+          );
+        }
+
+        toast.success("Usuário atualizado com sucesso");
+      } else {
+        const payload = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        };
+
+        const response = await fetch("/api/admin/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await parseApiResponse<User | ApiErrorResponse>(response);
+
+        if (!response.ok) {
+          throw new Error(
+            getApiErrorMessage(
+              data as ApiErrorResponse,
+              "Erro ao criar usuário"
+            )
+          );
+        }
+
+        toast.success("Usuário criado com sucesso");
       }
 
-      toast.success(
-        editing
-          ? "Usuário atualizado com sucesso"
-          : "Usuário criado com sucesso"
-      );
-
-      setFormOpen(false);
-      setEditingUser(null);
-      setFormData({
-        ...EMPTY_USER_FORM,
-      });
-
+      closeFormModal();
       await loadUsers();
     } catch (error) {
-      console.error("Erro ao salvar usuário:", error);
-
       const message =
         error instanceof Error ? error.message : "Erro ao salvar usuário";
 
@@ -190,10 +272,15 @@ export default function UsersPageClient() {
         method: "DELETE",
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse<{ success: boolean }>(response);
 
       if (!response.ok) {
-        throw new Error(data.error || "Erro ao excluir usuário");
+        throw new Error(
+          getApiErrorMessage(
+            data as ApiErrorResponse,
+            "Erro ao excluir usuário"
+          )
+        );
       }
 
       toast.success("Usuário excluído com sucesso");
@@ -202,8 +289,6 @@ export default function UsersPageClient() {
 
       await loadUsers();
     } catch (error) {
-      console.error("Erro ao excluir usuário:", error);
-
       const message =
         error instanceof Error ? error.message : "Erro ao excluir usuário";
 
@@ -211,10 +296,6 @@ export default function UsersPageClient() {
     } finally {
       setDeleting(false);
     }
-  }
-
-  function handleClearSearch() {
-    setSearch("");
   }
 
   return (
@@ -234,7 +315,7 @@ export default function UsersPageClient() {
         ) : filteredUsers.length === 0 ? (
           <UsersEmptyState
             hasSearch={Boolean(search.trim())}
-            onClearSearch={handleClearSearch}
+            onClearSearch={() => setSearch("")}
             onCreate={openCreateModal}
           />
         ) : (

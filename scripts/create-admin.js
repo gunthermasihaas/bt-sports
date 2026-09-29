@@ -1,27 +1,57 @@
 import "dotenv/config";
 import bcrypt from "bcrypt";
-import { prisma } from "../lib/prisma.js";
+import { PrismaClient } from "../generated/prisma/index.js";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg(pool),
+});
 
 async function main() {
-  const passwordHash = await bcrypt.hash("Stampede2694!", 10);
+  const email = "gunther@biarritz.com.br";
+  const name = "Gunther Masi Haas";
+  const password = "Stampede2694!";
 
-  await prisma.user.upsert({
-    where: { email: "gunther@biarritz.com.br" },
-    update: {
+  console.log("Removendo usuários existentes...");
+
+  await prisma.user.deleteMany();
+
+  console.log("Usuários removidos.");
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
       password: passwordHash,
-      role: "admin",
+      role: "ADMIN",
     },
-    create: {
-      email: "gunther@biarritz.com.br",
-      name: "Gunther Masi Haas",
-      password: passwordHash,
-      role: "admin",
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      created_at: true,
+      updated_at: true,
     },
   });
 
-  console.log("✅ Admin criado/atualizado");
+  console.log("\nAdmin criado:");
+  console.log(user);
 }
 
 main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .catch((error) => {
+    console.error("Erro ao criar admin:", error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+    await pool.end();
+  });
