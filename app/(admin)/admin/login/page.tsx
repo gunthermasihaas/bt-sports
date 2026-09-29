@@ -12,13 +12,14 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated" && session.user.role === "admin") {
+    if (status === "authenticated" && session.user.role === "ADMIN") {
       router.replace("/admin");
     }
   }, [status, session, router]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     setError(null);
     setLoading(true);
 
@@ -39,13 +40,16 @@ export default function AdminLoginPage() {
           ? "Email ou senha inválidos"
           : "Erro ao tentar fazer login"
       );
+
       return;
     }
 
     router.push(res.url ?? "/admin");
   }
 
-  if (status === "loading") return null;
+  if (status === "loading") {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen flex-col justify-center bg-surface px-6 py-12 lg:px-8">
@@ -77,6 +81,7 @@ export default function AdminLoginPage() {
             <label className="block text-sm font-medium text-color-text">
               Email
             </label>
+
             <input
               name="email"
               type="email"
@@ -98,6 +103,7 @@ export default function AdminLoginPage() {
             <label className="block text-sm font-medium text-color-text">
               Senha
             </label>
+
             <input
               name="password"
               type="password"

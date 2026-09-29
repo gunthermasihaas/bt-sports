@@ -9,7 +9,7 @@ export default function Header() {
 
   if (status === "loading") return null;
 
-  if (session?.user?.role === "admin") {
+  if (session?.user?.role === "ADMIN") {
     return <HeaderAdmin />;
   }
 

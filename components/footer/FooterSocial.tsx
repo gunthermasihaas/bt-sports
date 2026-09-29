@@ -13,7 +13,7 @@ export function FooterSocial() {
       <div className="mt-6 mb-10 flex justify-center sm:block">
         <blockquote
           className="instagram-media"
-          data-instgrm-permalink="https://www.instagram.com/biarritzturismosports/"
+          data-instgrm-permalink="https://www.instagram.com/biarritzsports/"
           data-instgrm-version="14"
           style={{
             width: "100%",

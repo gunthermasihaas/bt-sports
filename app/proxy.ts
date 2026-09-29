@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
 
-    if (token.role !== "admin") {
+    if (token.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/403", request.url));
     }
   }

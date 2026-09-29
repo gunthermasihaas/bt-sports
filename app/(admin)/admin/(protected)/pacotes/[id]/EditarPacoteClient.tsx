@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import InformacoesBasicas from "@/components/pacotes/novos/InformacoesBasicas";
 import ImagensPacote from "@/components/pacotes/novos/ImagensPacote";
 import ConteudoPacote from "@/components/pacotes/novos/ConteudoPacote";
@@ -45,6 +46,8 @@ type UploadResponse = {
 };
 
 export default function EditarPacoteClient({ pacote, categorias }: Props) {
+  const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
 
@@ -148,7 +151,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
 
       toast.success("Pacote atualizado com sucesso");
 
-      window.location.reload();
+      router.refresh();
     } catch (error) {
       console.error("Erro ao salvar alterações:", error);
 
@@ -185,7 +188,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
 
       toast.success("Pacote arquivado com sucesso");
 
-      window.location.href = "/admin/pacotes";
+      router.push("/admin/pacotes");
     } catch (error) {
       console.error("Erro ao arquivar pacote:", error);
 
@@ -287,7 +290,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         onCancel={() => setShowCancelModal(false)}
         onConfirm={() => {
           setShowCancelModal(false);
-          window.history.back();
+          router.back();
         }}
       />
 
