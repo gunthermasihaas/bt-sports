@@ -99,7 +99,6 @@ export default function UsersPageClient() {
         throw new Error("Resposta inválida ao carregar usuários.");
       }
 
-      console.log("USERS RECEBIDOS DA API:", data);
       setUsers(data);
     } catch (error) {
       const message =
@@ -133,25 +132,23 @@ export default function UsersPageClient() {
 
   function openCreateModal() {
     setEditingUser(null);
-    setFormData(EMPTY_USER_FORM);
+
+    setFormData({
+      ...EMPTY_USER_FORM,
+      role: "EDITOR",
+    });
+
     setFormOpen(true);
   }
 
   function openEditModal(user: User) {
-    console.log("USER RECEBIDO PARA EDIÇÃO:", user);
-    console.log("USER ID:", JSON.stringify(user.id));
-
-    if (!user.id) {
-      toast.error("Erro: usuário sem ID.");
-      return;
-    }
-
     setEditingUser(user);
 
     setFormData({
       name: user.name ?? "",
       email: user.email,
       password: "",
+      role: user.role,
     });
 
     setFormOpen(true);
@@ -172,34 +169,22 @@ export default function UsersPageClient() {
       setSaving(true);
 
       if (editingUser) {
-        if (!editingUser.id) {
-          throw new Error(
-            "Não foi possível identificar o usuário que está sendo editado."
-          );
-        }
-
         const payload: {
           name: string;
           email: string;
+          role: UserFormData["role"];
           password?: string;
         } = {
           name: formData.name,
           email: formData.email,
+          role: formData.role,
         };
 
-        /*
-         * Na edição:
-         *
-         * senha vazia = mantém a senha atual
-         * senha preenchida = altera a senha
-         */
         if (formData.password.trim()) {
           payload.password = formData.password;
         }
 
-        const userId = encodeURIComponent(editingUser.id);
-
-        const response = await fetch(`/api/admin/users/${userId}`, {
+        const response = await fetch(`/api/admin/users/${editingUser.id}`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -207,7 +192,7 @@ export default function UsersPageClient() {
           body: JSON.stringify(payload),
         });
 
-        const data = await parseApiResponse<User | ApiErrorResponse>(response);
+        const data = await parseApiResponse<User>(response);
 
         if (!response.ok) {
           throw new Error(
@@ -224,6 +209,7 @@ export default function UsersPageClient() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          role: formData.role,
         };
 
         const response = await fetch("/api/admin/users", {
@@ -234,7 +220,7 @@ export default function UsersPageClient() {
           body: JSON.stringify(payload),
         });
 
-        const data = await parseApiResponse<User | ApiErrorResponse>(response);
+        const data = await parseApiResponse<User>(response);
 
         if (!response.ok) {
           throw new Error(
@@ -261,7 +247,7 @@ export default function UsersPageClient() {
   }
 
   async function handleDelete() {
-    if (!deleteUser || deleting) {
+    if (!deleteUser) {
       return;
     }
 

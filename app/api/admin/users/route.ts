@@ -24,6 +24,8 @@ const createUserSchema = z.object({
     .string()
     .min(12, "A senha deve ter pelo menos 12 caracteres")
     .max(128, "A senha deve ter no máximo 128 caracteres"),
+
+  role: z.enum(["ADMIN", "EDITOR"]),
 });
 
 function isUniqueConstraintError(error: unknown): boolean {
@@ -94,7 +96,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, password } = result.data;
+    const { name, email, password, role } = result.data;
 
     const existingUser = await prisma.user.findUnique({
       where: {
@@ -123,7 +125,7 @@ export async function POST(req: Request) {
         name,
         email,
         password: passwordHash,
-        role: "ADMIN",
+        role,
       },
       select: {
         id: true,

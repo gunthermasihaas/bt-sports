@@ -6,6 +6,19 @@ type Props = {
   onDelete: (user: User) => void;
 };
 
+function getRoleLabel(role: User["role"]): string {
+  switch (role) {
+    case "ADMIN":
+      return "Administrador";
+
+    case "EDITOR":
+      return "Editor";
+
+    default:
+      return role;
+  }
+}
+
 export default function UserCard({ user, onEdit, onDelete }: Props) {
   const initials =
     user.name
@@ -39,8 +52,8 @@ export default function UserCard({ user, onEdit, onDelete }: Props) {
       </p>
 
       <div className="mt-3 md:mt-0">
-        <span className="inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-brand">
-          {user.role}
+        <span className="inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold tracking-wide text-brand">
+          {getRoleLabel(user.role)}
         </span>
       </div>
 
@@ -56,7 +69,8 @@ export default function UserCard({ user, onEdit, onDelete }: Props) {
         <button
           type="button"
           onClick={() => onDelete(user)}
-          className="min-h-9 rounded-lg border border-danger/40 px-3 py-2 text-sm font-semibold text-danger transition-all duration-150 hover:-translate-y-0.5 hover:bg-danger/10 hover:shadow-sm active:translate-y-0"
+          disabled={user.email.toLowerCase() === "gunther@biarritz.com.br"}
+          className="min-h-9 rounded-lg border border-danger/40 px-3 py-2 text-sm font-semibold text-danger transition-all duration-150 hover:-translate-y-0.5 hover:bg-danger/10 hover:shadow-sm active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Excluir
         </button>

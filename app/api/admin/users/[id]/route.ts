@@ -6,6 +6,8 @@ import { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 
+const PROTECTED_ADMIN_EMAIL = "gunther@biarritz.com.br";
+
 const updateUserSchema = z.object({
   name: z
     .string()
@@ -25,6 +27,8 @@ const updateUserSchema = z.object({
     .max(128, "A senha deve ter no máximo 128 caracteres")
     .optional()
     .or(z.literal("")),
+
+  role: z.enum(["ADMIN", "EDITOR"]),
 });
 
 function isUniqueConstraintError(error: unknown): boolean {
@@ -77,7 +81,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       );
     }
 
-    const { name, email, password } = result.data;
+    const { name, email, password, role } = result.data;
 
     const existingUser = await prisma.user.findUnique({
       where: {
@@ -85,6 +89,8 @@ export async function PATCH(req: Request, context: RouteContext) {
       },
       select: {
         id: true,
+        email: true,
+        role: true,
       },
     });
 
@@ -99,13 +105,50 @@ export async function PATCH(req: Request, context: RouteContext) {
       );
     }
 
+    const isProtectedUser =
+      existingUser.email.toLowerCase() === PROTECTED_ADMIN_EMAIL;
+
+    /*
+     * A conta principal é imutável em relação a:
+     * - e-mail
+     * - role
+     *
+     * Nome e senha continuam podendo ser alterados.
+     */
+    if (isProtectedUser) {
+      if (email !== PROTECTED_ADMIN_EMAIL) {
+        return NextResponse.json(
+          {
+            error: "O e-mail da conta principal não pode ser alterado",
+          },
+          {
+            status: 403,
+          }
+        );
+      }
+
+      if (role !== "ADMIN") {
+        return NextResponse.json(
+          {
+            error:
+              "A conta principal não pode perder o perfil de administrador",
+          },
+          {
+            status: 403,
+          }
+        );
+      }
+    }
+
     const data: {
       name: string;
       email: string;
+      role: "ADMIN" | "EDITOR";
       password?: string;
     } = {
       name,
-      email,
+      email: isProtectedUser ? PROTECTED_ADMIN_EMAIL : email,
+      role: isProtectedUser ? "ADMIN" : role,
     };
 
     /*
@@ -197,6 +240,8 @@ export async function DELETE(_req: Request, context: RouteContext) {
       },
       select: {
         id: true,
+        email: true,
+        role: true,
       },
     });
 
@@ -207,6 +252,19 @@ export async function DELETE(_req: Request, context: RouteContext) {
         },
         {
           status: 404,
+        }
+      );
+    }
+
+    const isProtectedUser = user.email.toLowerCase() === PROTECTED_ADMIN_EMAIL;
+
+    if (isProtectedUser) {
+      return NextResponse.json(
+        {
+          error: "A conta principal não pode ser excluída",
+        },
+        {
+          status: 403,
         }
       );
     }

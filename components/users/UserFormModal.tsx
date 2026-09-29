@@ -15,6 +15,8 @@ type Props = {
   onSubmit: () => void;
 };
 
+const PROTECTED_ADMIN_EMAIL = "gunther@biarritz.com.br";
+
 export default function UserFormModal({
   open,
   user,
@@ -48,6 +50,8 @@ export default function UserFormModal({
 
   const editing = Boolean(user);
 
+  const isProtectedUser = user?.email.toLowerCase() === PROTECTED_ADMIN_EMAIL;
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-sm sm:items-center sm:p-4">
       <div
@@ -68,7 +72,7 @@ export default function UserFormModal({
             <p className="mt-1 text-sm text-admin-muted">
               {editing
                 ? "Atualize os dados de acesso do usuário."
-                : "Crie um novo acesso administrativo."}
+                : "Crie um novo acesso ao painel administrativo."}
             </p>
           </div>
 
@@ -111,7 +115,8 @@ export default function UserFormModal({
               required
               maxLength={255}
               autoFocus
-              className="mt-2 h-11 w-full rounded-lg border border-default bg-surface px-3 text-sm text-admin outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+              disabled={saving}
+              className="mt-2 h-11 w-full rounded-lg border border-default bg-surface px-3 text-sm text-admin outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:opacity-70"
             />
           </div>
 
@@ -136,8 +141,47 @@ export default function UserFormModal({
               required
               maxLength={255}
               autoComplete="email"
-              className="mt-2 h-11 w-full rounded-lg border border-default bg-surface px-3 text-sm text-admin outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+              disabled={saving || isProtectedUser}
+              className="mt-2 h-11 w-full rounded-lg border border-default bg-surface px-3 text-sm text-admin outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-70"
             />
+
+            {isProtectedUser && (
+              <p className="mt-2 text-xs text-admin-muted">
+                Esta é a conta administrativa principal e o e-mail não pode ser
+                alterado.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="user-role"
+              className="block text-sm font-semibold text-admin"
+            >
+              Perfil
+            </label>
+
+            <select
+              id="user-role"
+              value={form.role}
+              disabled={saving || isProtectedUser}
+              onChange={(event) =>
+                onChange({
+                  ...form,
+                  role: event.target.value as UserFormData["role"],
+                })
+              }
+              className="mt-2 h-11 w-full rounded-lg border border-default bg-surface px-3 text-sm text-admin outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-70"
+            >
+              <option value="EDITOR">Editor</option>
+              <option value="ADMIN">Administrador</option>
+            </select>
+
+            {isProtectedUser && (
+              <p className="mt-2 text-xs text-admin-muted">
+                Esta conta é protegida e permanece como Administrador.
+              </p>
+            )}
           </div>
 
           <UserPasswordField
