@@ -33,6 +33,14 @@ type EditorState = {
   canRedo: boolean;
 };
 
+const EMPTY_EDITOR_STATE: EditorState = {
+  words: 0,
+  characters: 0,
+  isEmpty: true,
+  canUndo: false,
+  canRedo: false,
+};
+
 export default function RichTextEditor({ value, onChange }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [linkPopoverOpen, setLinkPopoverOpen] = useState(false);
@@ -79,6 +87,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
 
     content: value,
     immediatelyRender: false,
+    shouldRerenderOnTransaction: false,
 
     onUpdate({ editor: currentEditor }) {
       onChange(currentEditor.getHTML());
@@ -87,15 +96,17 @@ export default function RichTextEditor({ value, onChange }: Props) {
 
   const editorState = useEditorState({
     editor,
-    selector: ({ editor: currentEditor }): EditorState | null => {
+    selector: ({ editor: currentEditor }) => {
       if (!currentEditor) {
-        return null;
+        return EMPTY_EDITOR_STATE;
       }
 
       const textContent = currentEditor.state.doc.textContent;
 
       return {
-        words: textContent.trim().split(/\s+/).filter(Boolean).length,
+        words: textContent.trim()
+          ? textContent.trim().split(/\s+/).filter(Boolean).length
+          : 0,
 
         characters: textContent.length,
 
@@ -146,15 +157,8 @@ export default function RichTextEditor({ value, onChange }: Props) {
     );
   }
 
-  const activeEditor = editor;
-
-  const stats: EditorState = editorState ?? {
-    words: 0,
-    characters: 0,
-    isEmpty: true,
-    canUndo: false,
-    canRedo: false,
-  };
+  const currentEditor = editor;
+  const currentEditorState = editorState ?? EMPTY_EDITOR_STATE;
 
   async function handleImageUpload(file: File) {
     const validationError = validateInlineImage(file);
@@ -169,7 +173,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
 
       const url = await uploadInlineImage(file);
 
-      activeEditor
+      currentEditor
         .chain()
         .focus()
         .setImage({
@@ -201,14 +205,14 @@ export default function RichTextEditor({ value, onChange }: Props) {
 
   return (
     <div className="relative mt-2 overflow-visible rounded-lg border border-default bg-surface shadow-sm">
-      <RichTextToolbar editor={activeEditor} />
+      <RichTextToolbar editor={currentEditor} />
 
-      <RichTextBubbleMenu editor={activeEditor} onLink={openLinkPopover} />
+      <RichTextBubbleMenu editor={currentEditor} onLink={openLinkPopover} />
 
       {linkPopoverOpen && (
         <div className="absolute left-2 top-14 z-40">
           <RichTextLinkPopover
-            editor={activeEditor}
+            editor={currentEditor}
             open={linkPopoverOpen}
             onClose={() => setLinkPopoverOpen(false)}
           />
@@ -237,7 +241,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
       )}
 
       <EditorContent
-        editor={activeEditor}
+        editor={currentEditor}
         className={[
           "min-h-72 p-5 outline-none",
           "[&_.ProseMirror]:min-h-60",
@@ -303,9 +307,10 @@ export default function RichTextEditor({ value, onChange }: Props) {
 
       <div className="flex flex-col gap-2 border-t border-default bg-surface-muted px-4 py-2.5 text-xs text-admin-muted sm:flex-row sm:items-center sm:justify-between">
         <span>
-          {stats.words} {stats.words === 1 ? "palavra" : "palavras"} ·{" "}
-          {stats.characters}{" "}
-          {stats.characters === 1 ? "caractere" : "caracteres"}
+          {currentEditorState.words}{" "}
+          {currentEditorState.words === 1 ? "palavra" : "palavras"} ·{" "}
+          {currentEditorState.characters}{" "}
+          {currentEditorState.characters === 1 ? "caractere" : "caracteres"}
         </span>
 
         <span className="hidden sm:inline">

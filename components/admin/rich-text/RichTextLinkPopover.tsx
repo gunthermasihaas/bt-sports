@@ -12,7 +12,9 @@ type Props = {
 };
 
 export default function RichTextLinkPopover({ editor, open, onClose }: Props) {
-  const [url, setUrl] = useState(() => editor.getAttributes("link").href ?? "");
+  const [url, setUrl] = useState(() => {
+    return editor.getAttributes("link").href ?? "";
+  });
 
   if (!open) {
     return null;

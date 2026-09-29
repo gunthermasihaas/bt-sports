@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 
 type UploadImagemProps = {
@@ -16,6 +16,17 @@ type UploadImagemProps = {
   helperText?: string;
 };
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+const ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+]);
+
+const ACCEPT_ATTRIBUTE = "image/jpeg,image/png,image/webp,image/avif";
+
 export default function UploadImagem({
   label,
   value,
@@ -28,56 +39,78 @@ export default function UploadImagem({
   recommendedSize,
   helperText,
 }: UploadImagemProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!value) {
-      // Limpa a pré-visualização anterior.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+  function handleFileChange(file: File | null) {
+    setError(null);
+
+    if (!file) {
+      onChange(null);
       setPreviewUrl(null);
       return;
     }
 
-    const url = URL.createObjectURL(value);
+    if (!ALLOWED_TYPES.has(file.type.toLowerCase())) {
+      setError("Formato não permitido. Use JPG, PNG, WebP ou AVIF.");
+      return;
+    }
 
-    setPreviewUrl(url);
+    if (file.size <= 0) {
+      setError("O arquivo está vazio.");
+      return;
+    }
 
-    return () => {
-      URL.revokeObjectURL(url);
-    };
-  }, [value]);
+    if (file.size > MAX_FILE_SIZE) {
+      setError("A imagem deve ter no máximo 10 MB.");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+
+    setPreviewUrl((previous) => {
+      if (previous) {
+        URL.revokeObjectURL(previous);
+      }
+
+      return objectUrl;
+    });
+
+    onChange(file);
+  }
+
+  function clearSelectedFile() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setPreviewUrl(null);
+    setError(null);
+    onChange(null);
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  }
 
   const aspectClass =
     aspect === "16:9"
       ? "aspect-video"
       : aspect === "4:3"
-        ? "aspect-4/3"
+        ? "aspect-[4/3]"
         : "aspect-[21/9]";
 
   const aspectLabel =
     aspect === "16:9" ? "16:9" : aspect === "4:3" ? "4:3" : "21:9";
 
-  function handleFileChange(file: File | null) {
-    if (!file) {
-      onChange(null);
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      return;
-    }
-
-    onChange(file);
-  }
-
   return (
     <div className="space-y-4 rounded-xl border border-default bg-surface p-4">
-      {/* Cabeçalho */}
       <div className="space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <label className="block text-sm font-semibold text-admin">
+          <span className="block text-sm font-semibold text-admin">
             {label}
-          </label>
+          </span>
 
           <span className="rounded-full bg-surface-muted px-2.5 py-1 text-xs font-medium text-admin-muted">
             Proporção {aspectLabel}
@@ -89,7 +122,6 @@ export default function UploadImagem({
         )}
       </div>
 
-      {/* Local de exibição */}
       {location && (
         <div className="rounded-lg border border-default bg-surface-muted p-3">
           <div className="mb-1 flex items-center gap-2">
@@ -106,9 +138,7 @@ export default function UploadImagem({
         </div>
       )}
 
-      {/* Conteúdo de referência e upload */}
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Screenshot real */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-admin-muted">
@@ -125,12 +155,12 @@ export default function UploadImagem({
                 alt={`Exemplo de utilização de ${label.toLowerCase()}`}
                 width={1600}
                 height={900}
-                className="h-auto max-h-105 w-full object-contain"
+                className="h-auto max-h-[420px] w-full object-contain"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>
           ) : (
-            <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed border-border-muted bg-surface-muted p-6 text-center">
+            <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed border-default bg-surface-muted p-6 text-center">
               <p className="text-sm text-admin-muted">
                 Nenhuma imagem de referência configurada.
               </p>
@@ -142,7 +172,6 @@ export default function UploadImagem({
           </p>
         </div>
 
-        {/* Upload e preview */}
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-admin-muted">
@@ -154,7 +183,6 @@ export default function UploadImagem({
             )}
           </div>
 
-          {/* Imagem já cadastrada */}
           {!value && imagemAtualUrl ? (
             <div className="space-y-3">
               <div
@@ -172,8 +200,9 @@ export default function UploadImagem({
               <label className="inline-flex cursor-pointer text-sm font-medium text-brand hover:underline">
                 Substituir imagem
                 <input
+                  ref={inputRef}
                   type="file"
-                  accept="image/*"
+                  accept={ACCEPT_ATTRIBUTE}
                   hidden
                   onChange={(event) =>
                     handleFileChange(event.target.files?.[0] ?? null)
@@ -182,8 +211,7 @@ export default function UploadImagem({
               </label>
             </div>
           ) : !value ? (
-            /* Nenhuma imagem selecionada */
-            <label className="flex min-h-48 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border-muted bg-surface-muted p-6 text-center transition-colors hover:border-brand">
+            <label className="flex min-h-48 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-default bg-surface-muted p-6 text-center transition-colors hover:border-brand">
               <span className="text-sm text-admin-muted">
                 Selecione uma imagem para visualizar
               </span>
@@ -193,8 +221,9 @@ export default function UploadImagem({
               </span>
 
               <input
+                ref={inputRef}
                 type="file"
-                accept="image/*"
+                accept={ACCEPT_ATTRIBUTE}
                 hidden
                 onChange={(event) =>
                   handleFileChange(event.target.files?.[0] ?? null)
@@ -202,7 +231,6 @@ export default function UploadImagem({
               />
             </label>
           ) : (
-            /* Nova imagem selecionada */
             <div className="space-y-3">
               {previewUrl && (
                 <div
@@ -223,8 +251,9 @@ export default function UploadImagem({
                 <label className="cursor-pointer text-sm font-medium text-brand hover:underline">
                   Trocar imagem
                   <input
+                    ref={inputRef}
                     type="file"
-                    accept="image/*"
+                    accept={ACCEPT_ATTRIBUTE}
                     hidden
                     onChange={(event) =>
                       handleFileChange(event.target.files?.[0] ?? null)
@@ -234,7 +263,7 @@ export default function UploadImagem({
 
                 <button
                   type="button"
-                  onClick={() => onChange(null)}
+                  onClick={clearSelectedFile}
                   className="text-sm font-medium text-danger hover:underline"
                 >
                   Remover imagem
@@ -242,10 +271,15 @@ export default function UploadImagem({
               </div>
             </div>
           )}
+
+          {error && (
+            <p role="alert" className="text-xs font-medium text-danger">
+              {error}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Informações técnicas */}
       <div className="grid gap-3 border-t border-default pt-4 sm:grid-cols-2">
         <div className="rounded-lg bg-surface-muted p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-admin-muted">
@@ -268,7 +302,6 @@ export default function UploadImagem({
         )}
       </div>
 
-      {/* Orientação adicional */}
       {helperText && (
         <p className="text-xs leading-5 text-admin-muted">{helperText}</p>
       )}

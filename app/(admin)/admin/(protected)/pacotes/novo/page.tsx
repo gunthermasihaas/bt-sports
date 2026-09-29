@@ -2,27 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import InformacoesBasicas from "@/components/pacotes/novos/InformacoesBasicas";
 import ImagensPacote from "@/components/pacotes/novos/ImagensPacote";
 import ConteudoPacote from "@/components/pacotes/novos/ConteudoPacote";
 import StickyActions from "@/components/pacotes/novos/StickyActions";
 import PacotePreview from "@/components/pacotes/novos/PacotePreview";
 import { PacoteFormState } from "@/types/pacoteForm";
-import { toast } from "sonner";
 
 type Categoria = {
   id: number;
   nome: string;
 };
 
-type UploadResponse = {
+type ApiErrorResponse = {
   error?: string;
+  details?: unknown;
 };
 
 type CreatePacoteResponse = {
   pacote?: {
     id: number;
   };
+  error?: string;
+};
+
+type UploadResponse = {
   error?: string;
 };
 
@@ -61,13 +67,24 @@ export default function NovoPacotePage() {
 
     async function carregarCategorias() {
       try {
-        const response = await fetch("/api/admin/categorias-viagem");
+        const response = await fetch("/api/admin/categorias-viagem", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const data = (await response.json()) as Categoria[] | ApiErrorResponse;
 
         if (!response.ok) {
-          throw new Error("Erro ao carregar categorias");
+          throw new Error(
+            "error" in data && data.error
+              ? data.error
+              : "Erro ao carregar categorias"
+          );
         }
 
-        const data = (await response.json()) as Categoria[];
+        if (!Array.isArray(data)) {
+          throw new Error("Resposta inválida ao carregar categorias");
+        }
 
         if (active) {
           setCategorias(data);
@@ -76,12 +93,16 @@ export default function NovoPacotePage() {
         console.error("Erro ao carregar categorias:", error);
 
         if (active) {
-          toast.error("Erro ao carregar categorias");
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Erro ao carregar categorias"
+          );
         }
       }
     }
 
-    carregarCategorias();
+    void carregarCategorias();
 
     return () => {
       active = false;
@@ -114,39 +135,35 @@ export default function NovoPacotePage() {
   }
 
   async function uploadImagem(file: File, tipo: TipoImagem, pacoteId: number) {
-    const formDataUpload = new FormData();
+    const uploadData = new FormData();
 
-    formDataUpload.append("file", file);
-    formDataUpload.append("tipo", tipo);
-    formDataUpload.append("pacoteId", String(pacoteId));
+    uploadData.append("file", file);
+    uploadData.append("tipo", tipo);
+    uploadData.append("pacoteId", String(pacoteId));
 
     const response = await fetch("/api/admin/pacotes/upload", {
       method: "POST",
-      body: formDataUpload,
+      body: uploadData,
     });
 
-    let responseData: UploadResponse = {};
-
-    try {
-      responseData = (await response.json()) as UploadResponse;
-    } catch {
-      responseData = {};
-    }
+    const data = (await response.json()) as UploadResponse;
 
     if (!response.ok) {
-      throw new Error(responseData.error || `Erro ao enviar a imagem ${tipo}`);
+      throw new Error(data.error || `Erro ao enviar a imagem ${tipo}`);
     }
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
     if (loading) {
       return;
     }
 
-    if (!formData.nome.trim()) {
-      toast.error("Informe o nome do pacote");
+    const nome = formData.nome.trim();
+
+    if (nome.length < 3) {
+      toast.error("Informe um nome com pelo menos 3 caracteres");
       return;
     }
 
@@ -155,8 +172,8 @@ export default function NovoPacotePage() {
       return;
     }
 
-    if (formData.preco < 0) {
-      toast.error("O preço não pode ser negativo");
+    if (!Number.isFinite(formData.preco) || formData.preco < 0) {
+      toast.error("Informe um preço válido");
       return;
     }
 
@@ -169,16 +186,13 @@ export default function NovoPacotePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          nome,
+        }),
       });
 
-      let responseData: CreatePacoteResponse = {};
-
-      try {
-        responseData = (await response.json()) as CreatePacoteResponse;
-      } catch {
-        responseData = {};
-      }
+      const responseData = (await response.json()) as CreatePacoteResponse;
 
       if (!response.ok || !responseData.pacote) {
         throw new Error(responseData.error || "Erro ao criar pacote");
@@ -186,18 +200,40 @@ export default function NovoPacotePage() {
 
       const pacoteId = responseData.pacote.id;
 
-      setLoadingMessage("Enviando imagens...");
+      const imagens = [
+        fotoCapa
+          ? {
+              file: fotoCapa,
+              tipo: "CAPA" as const,
+            }
+          : null,
+        fotoCard
+          ? {
+              file: fotoCard,
+              tipo: "CARD" as const,
+            }
+          : null,
+        fotoBanner
+          ? {
+              file: fotoBanner,
+              tipo: "BANNER" as const,
+            }
+          : null,
+      ].filter(
+        (
+          item
+        ): item is {
+          file: File;
+          tipo: TipoImagem;
+        } => item !== null
+      );
 
-      if (fotoCapa) {
-        await uploadImagem(fotoCapa, "CAPA", pacoteId);
-      }
+      for (let index = 0; index < imagens.length; index += 1) {
+        const imagem = imagens[index];
 
-      if (fotoCard) {
-        await uploadImagem(fotoCard, "CARD", pacoteId);
-      }
+        setLoadingMessage(`Enviando imagens... ${index + 1}/${imagens.length}`);
 
-      if (fotoBanner) {
-        await uploadImagem(fotoBanner, "BANNER", pacoteId);
+        await uploadImagem(imagem.file, imagem.tipo, pacoteId);
       }
 
       toast.success("Pacote criado com sucesso");
@@ -274,7 +310,7 @@ export default function NovoPacotePage() {
               }
               dataInicio={
                 formData.data_inicio
-                  ? new Date(formData.data_inicio)
+                  ? new Date(`${formData.data_inicio}T00:00:00`)
                   : undefined
               }
               textoDestaque={formData.texto_destaque}

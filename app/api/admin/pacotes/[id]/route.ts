@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import slugify from "slugify";
 
 import { Moeda } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
@@ -57,12 +58,28 @@ export async function PATCH(req: Request, context: RouteContext) {
       );
     }
 
+    const body: unknown = await req.json();
+    const data = pacotePatchSchema.parse(body);
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json(
+        {
+          error: "Nenhuma alteração foi enviada",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     const pacoteExistente = await prisma.pacote.findUnique({
       where: {
         id: pacoteId,
       },
       select: {
         id: true,
+        nome: true,
+        slug: true,
         deleted_at: true,
       },
     });
@@ -74,24 +91,6 @@ export async function PATCH(req: Request, context: RouteContext) {
         },
         {
           status: 404,
-        }
-      );
-    }
-
-    const body: unknown = await req.json();
-    const data = pacotePatchSchema.parse(body);
-
-    if (
-      data.data_inicio !== undefined &&
-      data.data_inicio !== "" &&
-      Number.isNaN(new Date(data.data_inicio).getTime())
-    ) {
-      return NextResponse.json(
-        {
-          error: "Data de início inválida",
-        },
-        {
-          status: 400,
         }
       );
     }
@@ -116,6 +115,29 @@ export async function PATCH(req: Request, context: RouteContext) {
           }
         );
       }
+    }
+
+    let novoSlug: string | undefined;
+
+    if (data.nome !== undefined && data.nome.trim() !== pacoteExistente.nome) {
+      const slugBase = slugify(data.nome.trim(), {
+        lower: true,
+        strict: true,
+        trim: true,
+      });
+
+      if (!slugBase) {
+        return NextResponse.json(
+          {
+            error: "Não foi possível gerar um slug válido para o pacote",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      novoSlug = slugBase;
     }
 
     await prisma.$transaction(async (tx) => {
@@ -143,13 +165,19 @@ export async function PATCH(req: Request, context: RouteContext) {
             nome: data.nome.trim(),
           }),
 
+          ...(novoSlug !== undefined && {
+            slug: novoSlug,
+          }),
+
           ...(data.categoria_id !== undefined && {
             categoria_id: data.categoria_id,
           }),
 
           ...(data.data_inicio !== undefined && {
             data_inicio:
-              data.data_inicio === "" ? null : new Date(data.data_inicio),
+              data.data_inicio === ""
+                ? null
+                : new Date(`${data.data_inicio}T00:00:00`),
           }),
 
           ...(data.preco !== undefined && {
@@ -161,15 +189,15 @@ export async function PATCH(req: Request, context: RouteContext) {
           }),
 
           ...(data.texto_destaque !== undefined && {
-            texto_destaque: data.texto_destaque,
+            texto_destaque: data.texto_destaque?.trim() || null,
           }),
 
           ...(data.resumo !== undefined && {
-            resumo: data.resumo,
+            resumo: data.resumo?.trim() || null,
           }),
 
           ...(data.descricao !== undefined && {
-            descricao: data.descricao,
+            descricao: data.descricao?.trim() || null,
           }),
 
           ...(data.destaque !== undefined && {
@@ -199,7 +227,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       return NextResponse.json(
         {
           error:
-            "Não foi possível atualizar o pacote porque existe um conflito de unicidade.",
+            "Não foi possível atualizar o pacote porque o identificador gerado já está em uso.",
         },
         {
           status: 409,
@@ -210,7 +238,7 @@ export async function PATCH(req: Request, context: RouteContext) {
     if (isPrismaErrorCode(error, "P2025")) {
       return NextResponse.json(
         {
-          error: "Pacote ou categoria não encontrada",
+          error: "Pacote não encontrado",
         },
         {
           status: 404,
@@ -346,23 +374,11 @@ export async function DELETE(_req: Request, context: RouteContext) {
       );
     }
 
-    if (isPrismaErrorCode(error, "P2002")) {
-      return NextResponse.json(
-        {
-          error:
-            "Não foi possível excluir o pacote devido a um conflito de unicidade.",
-        },
-        {
-          status: 409,
-        }
-      );
-    }
-
     console.error("DELETE /api/admin/pacotes/[id]", error);
 
     return NextResponse.json(
       {
-        error: "Erro ao excluir pacote",
+        error: "Erro ao arquivar pacote",
       },
       {
         status: 500,

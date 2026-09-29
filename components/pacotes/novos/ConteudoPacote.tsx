@@ -82,7 +82,7 @@ export default function ConteudoPacote({ valores, onChange }: Props) {
 
         <Field
           label="Descrição completa"
-          hint="Use títulos, listas, links e imagens para estruturar a apresentação da experiência."
+          description="Use títulos, listas, links e imagens para estruturar a apresentação da experiência."
         >
           <RichTextEditor
             value={valores.descricao}

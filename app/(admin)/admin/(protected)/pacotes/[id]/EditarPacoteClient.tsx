@@ -9,7 +9,7 @@ import ImagensPacote from "@/components/pacotes/novos/ImagensPacote";
 import ConteudoPacote from "@/components/pacotes/novos/ConteudoPacote";
 import StickyActions from "@/components/pacotes/novos/StickyActions";
 import ConfirmModal from "@/components/ui/ConfirmModal";
-import PacoteView from "@/components/pacotes/PacoteView";
+import PacotePreview from "@/components/pacotes/novos/PacotePreview";
 
 import { PacoteFormState } from "@/types/pacoteForm";
 
@@ -95,28 +95,24 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
       body: formDataUpload,
     });
 
-    let responseData: ApiResponse = {};
-
-    try {
-      responseData = (await response.json()) as ApiResponse;
-    } catch {
-      responseData = {};
-    }
+    const responseData = (await response.json()) as ApiResponse;
 
     if (!response.ok) {
       throw new Error(responseData.error || `Erro ao enviar a imagem ${tipo}`);
     }
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
     if (loading) {
       return;
     }
 
-    if (!formData.nome.trim()) {
-      toast.error("Informe o nome do pacote");
+    const nome = formData.nome.trim();
+
+    if (nome.length < 3) {
+      toast.error("Informe um nome com pelo menos 3 caracteres");
       return;
     }
 
@@ -125,8 +121,8 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
       return;
     }
 
-    if (formData.preco < 0) {
-      toast.error("O preço não pode ser negativo");
+    if (!Number.isFinite(formData.preco) || formData.preco < 0) {
+      toast.error("Informe um preço válido");
       return;
     }
 
@@ -139,33 +135,54 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          nome,
+        }),
       });
 
-      let responseData: ApiResponse = {};
-
-      try {
-        responseData = (await response.json()) as ApiResponse;
-      } catch {
-        responseData = {};
-      }
+      const responseData = (await response.json()) as ApiResponse;
 
       if (!response.ok) {
         throw new Error(responseData.error || "Erro ao atualizar pacote");
       }
 
-      setLoadingMessage("Atualizando imagens...");
+      const imagens = [
+        fotoCapa
+          ? {
+              file: fotoCapa,
+              tipo: "CAPA" as const,
+            }
+          : null,
+        fotoCard
+          ? {
+              file: fotoCard,
+              tipo: "CARD" as const,
+            }
+          : null,
+        fotoBanner
+          ? {
+              file: fotoBanner,
+              tipo: "BANNER" as const,
+            }
+          : null,
+      ].filter(
+        (
+          item
+        ): item is {
+          file: File;
+          tipo: TipoImagem;
+        } => item !== null
+      );
 
-      if (fotoCapa) {
-        await uploadImagem(fotoCapa, "CAPA", pacote.id);
-      }
+      for (let index = 0; index < imagens.length; index += 1) {
+        const imagem = imagens[index];
 
-      if (fotoCard) {
-        await uploadImagem(fotoCard, "CARD", pacote.id);
-      }
+        setLoadingMessage(
+          `Atualizando imagens... ${index + 1}/${imagens.length}`
+        );
 
-      if (fotoBanner) {
-        await uploadImagem(fotoBanner, "BANNER", pacote.id);
+        await uploadImagem(imagem.file, imagem.tipo, pacote.id);
       }
 
       toast.success("Pacote atualizado com sucesso");
@@ -197,13 +214,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         method: "DELETE",
       });
 
-      let responseData: ApiResponse = {};
-
-      try {
-        responseData = (await response.json()) as ApiResponse;
-      } catch {
-        responseData = {};
-      }
+      const responseData = (await response.json()) as ApiResponse;
 
       if (!response.ok) {
         throw new Error(responseData.error || "Erro ao arquivar pacote");
@@ -223,6 +234,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
     } finally {
       setLoading(false);
       setLoadingMessage("");
+      setShowDeleteModal(false);
     }
   }
 
@@ -283,10 +295,9 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         </form>
       </div>
 
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-xl border border-default">
-        <PacoteView
-          slug={`preview-${pacote.id}`}
-          nome={formData.nome || "Nome do pacote"}
+      <div className="mx-auto mt-10 max-w-7xl overflow-hidden rounded-xl border border-default">
+        <PacotePreview
+          nome={formData.nome}
           categoria={
             categoriaAtual
               ? {
@@ -294,10 +305,12 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
                 }
               : undefined
           }
-          data_inicio={
-            formData.data_inicio ? new Date(formData.data_inicio) : undefined
+          dataInicio={
+            formData.data_inicio
+              ? new Date(`${formData.data_inicio}T00:00:00`)
+              : undefined
           }
-          texto_destaque={formData.texto_destaque}
+          textoDestaque={formData.texto_destaque}
           resumo={formData.resumo}
           descricao={formData.descricao}
           preco={formData.preco}
