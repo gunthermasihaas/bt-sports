@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { z } from "zod";
 
+import { contactRateLimit } from "@/lib/rate-limit";
+
 const contactSchema = z.object({
   nome: z
     .string()
@@ -62,8 +64,58 @@ function getRequiredEnv(name: string): string {
   return value;
 }
 
+function getClientIp(req: Request): string {
+  const forwardedFor = req.headers.get("x-forwarded-for");
+
+  if (forwardedFor) {
+    const firstIp = forwardedFor.split(",")[0]?.trim();
+
+    if (firstIp) {
+      return firstIp;
+    }
+  }
+
+  const realIp = req.headers.get("x-real-ip")?.trim();
+
+  if (realIp) {
+    return realIp;
+  }
+
+  return "unknown";
+}
+
 export async function POST(req: Request) {
   try {
+    const clientIp = getClientIp(req);
+
+    try {
+      const rateLimit = await contactRateLimit.limit(clientIp);
+
+      if (!rateLimit.success) {
+        const retryAfter = Math.max(
+          1,
+          Math.ceil((rateLimit.reset - Date.now()) / 1000)
+        );
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Muitas tentativas. Tente novamente mais tarde.",
+          },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(retryAfter),
+              "X-RateLimit-Limit": String(rateLimit.limit),
+              "X-RateLimit-Remaining": String(rateLimit.remaining),
+            },
+          }
+        );
+      }
+    } catch (error) {
+      console.error("POST /api/contact rate limit", error);
+    }
+
     const body: unknown = await req.json();
 
     const result = contactSchema.safeParse(body);
