@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import InformacoesBasicas from "@/components/pacotes/novos/InformacoesBasicas";
 import ImagensPacote from "@/components/pacotes/novos/ImagensPacote";
 import ConteudoPacote from "@/components/pacotes/novos/ConteudoPacote";
@@ -18,14 +19,27 @@ type UploadResponse = {
   error?: string;
 };
 
+type CreatePacoteResponse = {
+  pacote?: {
+    id: number;
+  };
+  error?: string;
+};
+
+type TipoImagem = "CAPA" | "CARD" | "BANNER";
+
 export default function NovoPacotePage() {
+  const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+
   const [fotoCapa, setFotoCapa] = useState<File | null>(null);
   const [fotoBanner, setFotoBanner] = useState<File | null>(null);
   const [fotoCard, setFotoCard] = useState<File | null>(null);
+
   const [capaPreviewUrl, setCapaPreviewUrl] = useState<string | undefined>(
     undefined
   );
@@ -43,21 +57,35 @@ export default function NovoPacotePage() {
   });
 
   useEffect(() => {
-    fetch("/api/admin/categorias-viagem")
-      .then(async (response) => {
+    let active = true;
+
+    async function carregarCategorias() {
+      try {
+        const response = await fetch("/api/admin/categorias-viagem");
+
         if (!response.ok) {
           throw new Error("Erro ao carregar categorias");
         }
 
-        return response.json();
-      })
-      .then((data: Categoria[]) => {
-        setCategorias(data);
-      })
-      .catch((error) => {
+        const data = (await response.json()) as Categoria[];
+
+        if (active) {
+          setCategorias(data);
+        }
+      } catch (error) {
         console.error("Erro ao carregar categorias:", error);
-        toast.error("Erro ao carregar categorias");
-      });
+
+        if (active) {
+          toast.error("Erro ao carregar categorias");
+        }
+      }
+    }
+
+    carregarCategorias();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -85,16 +113,12 @@ export default function NovoPacotePage() {
     }));
   }
 
-  async function uploadImagem(
-    file: File,
-    tipo: "CAPA" | "CARD" | "BANNER",
-    pacoteId: number
-  ) {
+  async function uploadImagem(file: File, tipo: TipoImagem, pacoteId: number) {
     const formDataUpload = new FormData();
 
     formDataUpload.append("file", file);
     formDataUpload.append("tipo", tipo);
-    formDataUpload.append("pacoteId", pacoteId.toString());
+    formDataUpload.append("pacoteId", String(pacoteId));
 
     const response = await fetch("/api/admin/pacotes/upload", {
       method: "POST",
@@ -110,17 +134,29 @@ export default function NovoPacotePage() {
     }
 
     if (!response.ok) {
-      throw new Error(
-        responseData.error || `Erro ao enviar a imagem do tipo ${tipo}`
-      );
+      throw new Error(responseData.error || `Erro ao enviar a imagem ${tipo}`);
     }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
+    if (loading) {
+      return;
+    }
+
+    if (!formData.nome.trim()) {
+      toast.error("Informe o nome do pacote");
+      return;
+    }
+
     if (formData.categoria_id === "") {
       toast.error("Selecione uma categoria");
+      return;
+    }
+
+    if (formData.preco < 0) {
+      toast.error("O preço não pode ser negativo");
       return;
     }
 
@@ -136,15 +172,10 @@ export default function NovoPacotePage() {
         body: JSON.stringify(formData),
       });
 
-      let responseData: {
-        pacote?: {
-          id: number;
-        };
-        error?: string;
-      } = {};
+      let responseData: CreatePacoteResponse = {};
 
       try {
-        responseData = await response.json();
+        responseData = (await response.json()) as CreatePacoteResponse;
       } catch {
         responseData = {};
       }
@@ -153,25 +184,26 @@ export default function NovoPacotePage() {
         throw new Error(responseData.error || "Erro ao criar pacote");
       }
 
-      const { pacote } = responseData;
+      const pacoteId = responseData.pacote.id;
 
       setLoadingMessage("Enviando imagens...");
 
       if (fotoCapa) {
-        await uploadImagem(fotoCapa, "CAPA", pacote.id);
+        await uploadImagem(fotoCapa, "CAPA", pacoteId);
       }
 
       if (fotoCard) {
-        await uploadImagem(fotoCard, "CARD", pacote.id);
+        await uploadImagem(fotoCard, "CARD", pacoteId);
       }
 
       if (fotoBanner) {
-        await uploadImagem(fotoBanner, "BANNER", pacote.id);
+        await uploadImagem(fotoBanner, "BANNER", pacoteId);
       }
 
       toast.success("Pacote criado com sucesso");
 
-      window.location.href = `/admin/pacotes/${pacote.id}`;
+      router.push(`/admin/pacotes/${pacoteId}`);
+      router.refresh();
     } catch (error) {
       console.error("Erro ao salvar pacote:", error);
 
@@ -250,7 +282,7 @@ export default function NovoPacotePage() {
               resumo={formData.resumo}
               descricao={formData.descricao}
               preco={formData.preco}
-              moeda={formData.moeda as "EUR" | "USD" | "BRL" | "GBP"}
+              moeda={formData.moeda}
               capaUrl={capaPreviewUrl}
             />
           </div>
@@ -259,9 +291,11 @@ export default function NovoPacotePage() {
             loading={loading}
             loadingMessage={loadingMessage}
             onCancel={() => {
-              if (window.confirm("Deseja cancelar?")) {
-                window.location.href = "/admin/pacotes";
+              if (loading) {
+                return;
               }
+
+              router.push("/admin/pacotes");
             }}
           />
         </form>

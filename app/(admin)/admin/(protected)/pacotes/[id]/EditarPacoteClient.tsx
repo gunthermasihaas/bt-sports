@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import InformacoesBasicas from "@/components/pacotes/novos/InformacoesBasicas";
 import ImagensPacote from "@/components/pacotes/novos/ImagensPacote";
 import ConteudoPacote from "@/components/pacotes/novos/ConteudoPacote";
 import StickyActions from "@/components/pacotes/novos/StickyActions";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import PacoteView from "@/components/pacotes/PacoteView";
-import { toast } from "sonner";
-import { PacoteFormState } from "@/types/pacoteForm";
 
-type Moeda = "EUR" | "USD" | "BRL" | "GBP";
+import { PacoteFormState } from "@/types/pacoteForm";
 
 type Categoria = {
   id: number;
@@ -24,7 +24,7 @@ type PacoteEditavel = {
   categoria_id: number;
   data_inicio: string;
   preco: number;
-  moeda?: Moeda;
+  moeda?: PacoteFormState["moeda"];
   texto_destaque: string;
   resumo: string;
   descricao: string;
@@ -41,7 +41,7 @@ type Props = {
 
 type TipoImagem = "CAPA" | "CARD" | "BANNER";
 
-type UploadResponse = {
+type ApiResponse = {
   error?: string;
 };
 
@@ -88,17 +88,17 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
 
     formDataUpload.append("file", file);
     formDataUpload.append("tipo", tipo);
-    formDataUpload.append("pacoteId", pacoteId.toString());
+    formDataUpload.append("pacoteId", String(pacoteId));
 
     const response = await fetch("/api/admin/pacotes/upload", {
       method: "POST",
       body: formDataUpload,
     });
 
-    let responseData: UploadResponse = {};
+    let responseData: ApiResponse = {};
 
     try {
-      responseData = (await response.json()) as UploadResponse;
+      responseData = (await response.json()) as ApiResponse;
     } catch {
       responseData = {};
     }
@@ -110,6 +110,25 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (loading) {
+      return;
+    }
+
+    if (!formData.nome.trim()) {
+      toast.error("Informe o nome do pacote");
+      return;
+    }
+
+    if (formData.categoria_id === "") {
+      toast.error("Selecione uma categoria");
+      return;
+    }
+
+    if (formData.preco < 0) {
+      toast.error("O preço não pode ser negativo");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -123,10 +142,10 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         body: JSON.stringify(formData),
       });
 
-      let responseData: UploadResponse = {};
+      let responseData: ApiResponse = {};
 
       try {
-        responseData = (await response.json()) as UploadResponse;
+        responseData = (await response.json()) as ApiResponse;
       } catch {
         responseData = {};
       }
@@ -166,6 +185,10 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
   }
 
   async function handleDelete() {
+    if (loading) {
+      return;
+    }
+
     try {
       setLoading(true);
       setLoadingMessage("Arquivando pacote...");
@@ -174,10 +197,10 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         method: "DELETE",
       });
 
-      let responseData: UploadResponse = {};
+      let responseData: ApiResponse = {};
 
       try {
-        responseData = (await response.json()) as UploadResponse;
+        responseData = (await response.json()) as ApiResponse;
       } catch {
         responseData = {};
       }
@@ -189,6 +212,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
       toast.success("Pacote arquivado com sucesso");
 
       router.push("/admin/pacotes");
+      router.refresh();
     } catch (error) {
       console.error("Erro ao arquivar pacote:", error);
 
@@ -259,10 +283,10 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
         </form>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-default">
+      <div className="mx-auto max-w-7xl overflow-hidden rounded-xl border border-default">
         <PacoteView
           slug={`preview-${pacote.id}`}
-          nome={formData.nome}
+          nome={formData.nome || "Nome do pacote"}
           categoria={
             categoriaAtual
               ? {
@@ -277,7 +301,7 @@ export default function EditarPacoteClient({ pacote, categorias }: Props) {
           resumo={formData.resumo}
           descricao={formData.descricao}
           preco={formData.preco}
-          moeda={formData.moeda as Moeda}
+          moeda={formData.moeda}
           capaUrl={pacote.capaUrl}
         />
       </div>

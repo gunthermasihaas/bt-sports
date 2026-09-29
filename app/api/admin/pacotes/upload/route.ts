@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { del, put } from "@vercel/blob";
 
 import { TipoFoto } from "@/generated/prisma";
+
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/require-role";
 
@@ -21,6 +22,13 @@ const REPLACEABLE_TYPES = new Set<TipoFoto>([
   TipoFoto.CARD,
   TipoFoto.BANNER,
 ]);
+
+const EXTENSIONS_BY_MIME: Record<string, Set<string>> = {
+  "image/jpeg": new Set(["jpg", "jpeg"]),
+  "image/png": new Set(["png"]),
+  "image/webp": new Set(["webp"]),
+  "image/avif": new Set(["avif"]),
+};
 
 function getSafeFileName(fileName: string): string {
   const fileNameWithoutPath = fileName.split(/[\\/]/).pop() ?? "";
@@ -97,9 +105,10 @@ function isValidImageSignature(buffer: ArrayBuffer, mimeType: string): boolean {
         bytes[10] === 0x69 &&
         bytes[11] === 0x66
       );
-  }
 
-  return false;
+    default:
+      return false;
+  }
 }
 
 function getTipoFoto(value: string): TipoFoto | null {
@@ -112,12 +121,13 @@ function getTipoFoto(value: string): TipoFoto | null {
   return tipo ?? null;
 }
 
-function isUniqueConstraintError(error: unknown): boolean {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  return "code" in error && error.code === "P2002";
+function isPrismaErrorCode(error: unknown, code: string): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === code
+  );
 }
 
 function getErrorMessage(error: unknown): string {
@@ -138,7 +148,20 @@ export async function POST(req: Request) {
   let uploadedBlobUrl: string | null = null;
 
   try {
-    const formData = await req.formData();
+    let formData: FormData;
+
+    try {
+      formData = await req.formData();
+    } catch {
+      return NextResponse.json(
+        {
+          error: "FormData inválido",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     const fileEntry = formData.get("file");
     const tipoRaw = formData.get("tipo");
@@ -251,6 +274,20 @@ export async function POST(req: Request) {
       );
     }
 
+    const allowedExtensionsForMime = EXTENSIONS_BY_MIME[mimeType];
+
+    if (!allowedExtensionsForMime || !allowedExtensionsForMime.has(extension)) {
+      return NextResponse.json(
+        {
+          error:
+            "A extensão do arquivo não corresponde ao tipo de imagem informado",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     const fileBuffer = await fileEntry.arrayBuffer();
 
     if (!isValidImageSignature(fileBuffer, mimeType)) {
@@ -285,22 +322,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const fotoAnterior = REPLACEABLE_TYPES.has(tipo)
-      ? await prisma.foto.findFirst({
-          where: {
-            pacote_id: pacoteId,
-            tipo,
-          },
-          orderBy: {
-            created_at: "desc",
-          },
-          select: {
-            id: true,
-            url: true,
-          },
-        })
-      : null;
-
     const safeFileName = getSafeFileName(fileEntry.name);
     const timestamp = Date.now();
 
@@ -318,29 +339,58 @@ export async function POST(req: Request) {
     uploadedBlobUrl = blob.url;
 
     try {
-      const foto = await prisma.$transaction(async (tx) => {
-        const novaFoto = await tx.foto.create({
-          data: {
-            pacote_id: pacoteId,
-            url: blob.url,
-            tipo,
-          },
-        });
+      const resultado = await prisma.$transaction(
+        async (tx) => {
+          let fotoAnterior: {
+            id: number;
+            url: string;
+          } | null = null;
 
-        if (fotoAnterior) {
-          await tx.foto.delete({
-            where: {
-              id: fotoAnterior.id,
+          if (REPLACEABLE_TYPES.has(tipo)) {
+            fotoAnterior = await tx.foto.findFirst({
+              where: {
+                pacote_id: pacoteId,
+                tipo,
+              },
+              orderBy: {
+                created_at: "desc",
+              },
+              select: {
+                id: true,
+                url: true,
+              },
+            });
+
+            if (fotoAnterior) {
+              await tx.foto.delete({
+                where: {
+                  id: fotoAnterior.id,
+                },
+              });
+            }
+          }
+
+          const novaFoto = await tx.foto.create({
+            data: {
+              pacote_id: pacoteId,
+              url: blob.url,
+              tipo,
             },
           });
+
+          return {
+            novaFoto,
+            fotoAnterior,
+          };
+        },
+        {
+          isolationLevel: "Serializable",
         }
+      );
 
-        return novaFoto;
-      });
-
-      if (fotoAnterior?.url) {
+      if (resultado.fotoAnterior?.url) {
         try {
-          await del(fotoAnterior.url);
+          await del(resultado.fotoAnterior.url);
         } catch (cleanupError) {
           console.error(
             "Erro ao remover Blob anterior:",
@@ -349,10 +399,12 @@ export async function POST(req: Request) {
         }
       }
 
+      uploadedBlobUrl = null;
+
       return NextResponse.json(
         {
           success: true,
-          foto,
+          foto: resultado.novaFoto,
           url: blob.url,
         },
         {
@@ -370,11 +422,35 @@ export async function POST(req: Request) {
         );
       }
 
-      if (isUniqueConstraintError(databaseError)) {
+      if (isPrismaErrorCode(databaseError, "P2002")) {
         return NextResponse.json(
           {
             error:
               "Outra imagem deste tipo foi enviada simultaneamente. Tente novamente.",
+          },
+          {
+            status: 409,
+          }
+        );
+      }
+
+      if (isPrismaErrorCode(databaseError, "P2034")) {
+        return NextResponse.json(
+          {
+            error:
+              "O upload entrou em conflito com outra alteração simultânea. Tente novamente.",
+          },
+          {
+            status: 409,
+          }
+        );
+      }
+
+      if (isPrismaErrorCode(databaseError, "P2025")) {
+        return NextResponse.json(
+          {
+            error:
+              "A imagem anterior não pôde ser substituída porque o registro não foi encontrado.",
           },
           {
             status: 409,

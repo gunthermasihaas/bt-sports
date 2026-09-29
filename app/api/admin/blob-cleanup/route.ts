@@ -14,6 +14,14 @@ type BlobItem = {
   size: number;
 };
 
+type AuditResult = {
+  totalBlobs: number;
+  totalFotosNoBanco: number;
+  totalOrfaos: number;
+  tamanhoTotalBytes: number;
+  orfaos: BlobItem[];
+};
+
 async function listAllPackageBlobs(): Promise<BlobItem[]> {
   const blobs: BlobItem[] = [];
 
@@ -34,6 +42,41 @@ async function listAllPackageBlobs(): Promise<BlobItem[]> {
   return blobs;
 }
 
+async function auditOrphanBlobs(): Promise<AuditResult> {
+  const [blobs, fotos] = await Promise.all([
+    listAllPackageBlobs(),
+
+    prisma.foto.findMany({
+      select: {
+        url: true,
+      },
+    }),
+  ]);
+
+  const urlsEmUso = new Set(fotos.map((foto) => foto.url));
+  const limiteData = Date.now() - MIN_AGE_MS;
+
+  const orfaos = blobs.filter((blob) => {
+    const idadeSegura = blob.uploadedAt.getTime() < limiteData;
+    const naoEstaNoBanco = !urlsEmUso.has(blob.url);
+
+    return idadeSegura && naoEstaNoBanco;
+  });
+
+  const tamanhoTotalBytes = orfaos.reduce(
+    (total, blob) => total + blob.size,
+    0
+  );
+
+  return {
+    totalBlobs: blobs.length,
+    totalFotosNoBanco: fotos.length,
+    totalOrfaos: orfaos.length,
+    tamanhoTotalBytes,
+    orfaos,
+  };
+}
+
 export async function GET() {
   const authorization = await requireRole(["ADMIN", "EDITOR"]);
 
@@ -42,36 +85,11 @@ export async function GET() {
   }
 
   try {
-    const [blobs, fotos] = await Promise.all([
-      listAllPackageBlobs(),
-
-      prisma.foto.findMany({
-        select: {
-          url: true,
-        },
-      }),
-    ]);
-
-    const urlsEmUso = new Set(fotos.map((foto) => foto.url));
-
-    const limiteData = Date.now() - MIN_AGE_MS;
-
-    const orfaos = blobs.filter((blob) => {
-      const idadeSegura = blob.uploadedAt.getTime() < limiteData;
-      const naoEstaNoBanco = !urlsEmUso.has(blob.url);
-
-      return idadeSegura && naoEstaNoBanco;
-    });
-
-    const tamanhoTotal = orfaos.reduce((total, blob) => total + blob.size, 0);
+    const audit = await auditOrphanBlobs();
 
     return NextResponse.json({
       success: true,
-      totalBlobs: blobs.length,
-      totalFotosNoBanco: fotos.length,
-      totalOrfaos: orfaos.length,
-      tamanhoTotalBytes: tamanhoTotal,
-      orfaos,
+      ...audit,
     });
   } catch (error) {
     console.error("GET /api/admin/blob-cleanup", error);
@@ -87,27 +105,17 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
-  const authorization = await requireRole(["ADMIN", "EDITOR"]);
+export async function POST() {
+  const authorization = await requireRole(["ADMIN"]);
 
   if (!authorization.authorized) {
     return authorization.response;
   }
 
   try {
-    const auditResponse = await GET();
+    const audit = await auditOrphanBlobs();
 
-    if (!auditResponse.ok) {
-      return auditResponse;
-    }
-
-    const audit = (await auditResponse.json()) as {
-      orfaos: BlobItem[];
-    };
-
-    const urls = audit.orfaos.map((blob) => blob.url);
-
-    if (urls.length === 0) {
+    if (audit.orfaos.length === 0) {
       return NextResponse.json({
         success: true,
         deleted: 0,
@@ -115,11 +123,14 @@ export async function POST(req: Request) {
       });
     }
 
+    const urls = audit.orfaos.map((blob) => blob.url);
+
     await del(urls);
 
     return NextResponse.json({
       success: true,
       deleted: urls.length,
+      deletedBytes: audit.tamanhoTotalBytes,
     });
   } catch (error) {
     console.error("POST /api/admin/blob-cleanup", error);

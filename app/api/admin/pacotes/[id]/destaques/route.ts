@@ -9,7 +9,7 @@ type RouteContext = {
   }>;
 };
 
-function parsePacoteId(id?: string) {
+function parsePacoteId(id?: string): number | null {
   if (!id || !/^\d+$/.test(id)) {
     return null;
   }
@@ -21,6 +21,15 @@ function parsePacoteId(id?: string) {
   }
 
   return pacoteId;
+}
+
+function isPrismaErrorCode(error: unknown, code: string): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === code
+  );
 }
 
 export async function PATCH(req: Request, context: RouteContext) {
@@ -66,9 +75,27 @@ export async function PATCH(req: Request, context: RouteContext) {
       );
     }
 
-    const body = await req.json();
+    let body: unknown;
 
-    if (typeof body.destaque !== "boolean") {
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        {
+          error: "JSON inválido",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      typeof body !== "object" ||
+      body === null ||
+      !("destaque" in body) ||
+      typeof body.destaque !== "boolean"
+    ) {
       return NextResponse.json(
         {
           error: "O campo destaque deve ser booleano",
@@ -85,10 +112,10 @@ export async function PATCH(req: Request, context: RouteContext) {
       if (destaque) {
         await tx.pacote.updateMany({
           where: {
-            destaque: true,
             id: {
               not: pacoteId,
             },
+            destaque: true,
             deleted_at: null,
           },
           data: {
@@ -111,6 +138,29 @@ export async function PATCH(req: Request, context: RouteContext) {
       success: true,
     });
   } catch (error) {
+    if (isPrismaErrorCode(error, "P2002")) {
+      return NextResponse.json(
+        {
+          error:
+            "Não foi possível definir este pacote como destaque porque outro pacote foi definido como destaque simultaneamente.",
+        },
+        {
+          status: 409,
+        }
+      );
+    }
+
+    if (isPrismaErrorCode(error, "P2025")) {
+      return NextResponse.json(
+        {
+          error: "Pacote não encontrado",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
     console.error("PATCH /api/admin/pacotes/[id]/destaques", error);
 
     return NextResponse.json(

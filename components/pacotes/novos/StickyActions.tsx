@@ -27,7 +27,7 @@ export default function StickyActions({
               disabled:opacity-50
             "
           >
-            Excluir pacote
+            Arquivar pacote
           </button>
         )}
 

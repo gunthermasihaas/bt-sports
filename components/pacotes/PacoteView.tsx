@@ -87,7 +87,7 @@ export default function PacoteView({
     <div className="bg-surface px-4 py-8 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl space-y-10">
         <section className="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
-          <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-surface-muted">
+          <div className="relative aspect-4/3 overflow-hidden rounded-xl bg-surface-muted">
             {capaUrl && (
               <Image
                 src={capaUrl}

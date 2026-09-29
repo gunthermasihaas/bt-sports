@@ -9,12 +9,38 @@ import { requireRole } from "@/lib/require-role";
 
 const MAX_CREATE_ATTEMPTS = 3;
 
-function isUniqueConstraintError(error: unknown): boolean {
+function isPrismaErrorCode(error: unknown, code: string): boolean {
   if (!error || typeof error !== "object") {
     return false;
   }
 
-  return "code" in error && error.code === "P2002";
+  return "code" in error && error.code === code;
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return isPrismaErrorCode(error, "P2002");
+}
+
+function isForeignKeyConstraintError(error: unknown): boolean {
+  return isPrismaErrorCode(error, "P2003");
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Erro desconhecido";
+}
+
+function createSlugCandidate(slugBase: string, attempt: number): string {
+  if (attempt === 0) {
+    return slugBase;
+  }
+
+  const suffix = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
+  return `${slugBase}-${suffix}`;
 }
 
 export async function POST(req: Request) {
@@ -58,22 +84,30 @@ export async function POST(req: Request) {
       );
     }
 
-    let slug = slugBase;
+    const categoria = await prisma.categoriaViagem.findUnique({
+      where: {
+        id: data.categoria_id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!categoria) {
+      return NextResponse.json(
+        {
+          error: "Categoria não encontrada",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     for (let attempt = 0; attempt < MAX_CREATE_ATTEMPTS; attempt++) {
-      if (attempt === 0) {
-        slug = slugBase;
-      } else {
-        slug = `${slugBase}-${attempt}`;
-      }
+      const slug = createSlugCandidate(slugBase, attempt);
 
       try {
-        while (await prisma.pacote.findUnique({ where: { slug } })) {
-          const suffix = Math.floor(Math.random() * 1_000_000);
-
-          slug = `${slugBase}-${suffix}`;
-        }
-
         const pacote = await prisma.$transaction(async (tx) => {
           if (data.destaque === true) {
             await tx.pacote.updateMany({
@@ -112,17 +146,45 @@ export async function POST(req: Request) {
           }
         );
       } catch (error) {
-        if (!isUniqueConstraintError(error)) {
-          throw error;
+        if (isUniqueConstraintError(error)) {
+          if (attempt < MAX_CREATE_ATTEMPTS - 1) {
+            continue;
+          }
+
+          return NextResponse.json(
+            {
+              error:
+                "Não foi possível criar o pacote porque o nome gerou um identificador já utilizado. Tente novamente.",
+            },
+            {
+              status: 409,
+            }
+          );
         }
 
-        if (attempt === MAX_CREATE_ATTEMPTS - 1) {
-          throw error;
+        if (isForeignKeyConstraintError(error)) {
+          return NextResponse.json(
+            {
+              error: "A categoria selecionada não existe",
+            },
+            {
+              status: 400,
+            }
+          );
         }
+
+        throw error;
       }
     }
 
-    throw new Error("Não foi possível criar o pacote");
+    return NextResponse.json(
+      {
+        error: "Não foi possível criar o pacote",
+      },
+      {
+        status: 500,
+      }
+    );
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
@@ -136,7 +198,7 @@ export async function POST(req: Request) {
       );
     }
 
-    console.error("POST /api/admin/pacotes", error);
+    console.error("POST /api/admin/pacotes", getErrorMessage(error));
 
     return NextResponse.json(
       {

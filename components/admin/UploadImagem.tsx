@@ -51,7 +51,7 @@ export default function UploadImagem({
     aspect === "16:9"
       ? "aspect-video"
       : aspect === "4:3"
-        ? "aspect-[4/3]"
+        ? "aspect-4/3"
         : "aspect-[21/9]";
 
   const aspectLabel =
@@ -125,7 +125,7 @@ export default function UploadImagem({
                 alt={`Exemplo de utilização de ${label.toLowerCase()}`}
                 width={1600}
                 height={900}
-                className="h-auto max-h-[420px] w-full object-contain"
+                className="h-auto max-h-105 w-full object-contain"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
             </div>
