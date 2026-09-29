@@ -1,6 +1,5 @@
 import { TipoFoto } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
-import { pacotesMock } from "@/mocks/pacotes";
 import { formatarDataCurta } from "@/lib/formatarData";
 
 export async function getPacotesRecentes(limit = 6) {
@@ -15,15 +14,13 @@ export async function getPacotesRecentes(limit = 6) {
       take: limit,
       include: {
         fotos: {
-          where: { tipo: TipoFoto.CARD },
+          where: {
+            tipo: TipoFoto.CARD,
+          },
           take: 1,
         },
       },
     });
-
-    if (!pacotes.length) {
-      return pacotesMock.slice(0, limit);
-    }
 
     return pacotes.map((pacote) => ({
       id: pacote.id,
@@ -37,6 +34,6 @@ export async function getPacotesRecentes(limit = 6) {
     }));
   } catch (error) {
     console.error("[getPacotesRecentes]", error);
-    return pacotesMock.slice(0, limit);
+    throw error;
   }
 }
