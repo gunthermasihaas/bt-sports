@@ -1,22 +1,44 @@
-import { getPacotesUi, Order } from "@/lib/getPacotesUi";
+import type { Metadata } from "next";
+
+import { getPacotesUi, type Order } from "@/lib/getPacotesUi";
 import PacotesGrid from "@/components/pacotes/pacotesGrid";
 import PacotesHeader from "@/components/pacotes/pacotesHeader";
 
+export const metadata: Metadata = {
+  title: "Pacotes de Turismo Esportivo",
+  description:
+    "Confira os pacotes de turismo esportivo da Biarritz Turismo Sports e viva grandes eventos esportivos de perto.",
+  alternates: {
+    canonical: "/pacotes",
+  },
+  openGraph: {
+    title: "Pacotes de Turismo Esportivo",
+    description:
+      "Confira os pacotes de turismo esportivo da Biarritz Turismo Sports e viva grandes eventos esportivos de perto.",
+    url: "/pacotes",
+    type: "website",
+  },
+};
+
 export const dynamic = "force-dynamic";
 
-export default async function PacotesPublicos({
-  searchParams,
-}: {
-  searchParams: Promise<{ order?: string }>;
-}) {
-  const params = await searchParams;
+type Props = {
+  searchParams: Promise<{
+    order?: string;
+  }>;
+};
 
-  const order: Order =
-    params.order === "data" ||
-    params.order === "preco-asc" ||
-    params.order === "preco-desc"
-      ? params.order
-      : "nome";
+function getValidOrder(value: string | undefined): Order {
+  if (value === "data" || value === "preco-asc" || value === "preco-desc") {
+    return value;
+  }
+
+  return "nome";
+}
+
+export default async function PacotesPublicos({ searchParams }: Props) {
+  const params = await searchParams;
+  const order = getValidOrder(params.order);
 
   const pacotes = await getPacotesUi(order);
 

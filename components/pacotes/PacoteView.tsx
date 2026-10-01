@@ -98,6 +98,8 @@ export default function PacoteView({
     nome
   )}&slug=${encodeURIComponent(slug)}`;
 
+  const altCapa = categoria?.nome ? `${nome} — ${categoria.nome}` : nome;
+
   return (
     <div className="bg-surface px-4 py-8 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-5xl space-y-10">
@@ -106,13 +108,18 @@ export default function PacoteView({
             {capaUrl ? (
               <Image
                 src={capaUrl}
-                alt={nome}
+                alt={altCapa}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
+                priority
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-muted">
+              <div
+                role="img"
+                aria-label={`Imagem de capa não disponível para ${nome}`}
+                className="flex h-full items-center justify-center text-sm text-muted"
+              >
                 Sem imagem de capa
               </div>
             )}

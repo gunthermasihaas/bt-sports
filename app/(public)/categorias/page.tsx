@@ -1,6 +1,24 @@
+import type { Metadata } from "next";
+
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "Categorias de Viagem",
+  description:
+    "Explore os pacotes de turismo esportivo da Biarritz Turismo Sports organizados por categoria.",
+  alternates: {
+    canonical: "/categorias",
+  },
+  openGraph: {
+    title: "Categorias de Viagem",
+    description:
+      "Explore os pacotes de turismo esportivo da Biarritz Turismo Sports organizados por categoria.",
+    url: "/categorias",
+    type: "website",
+  },
+};
 
 export default async function CategoriasPage() {
   const categorias = await prisma.categoriaViagem.findMany({
