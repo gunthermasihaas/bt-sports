@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import type { Categoria } from "@/types/categoria";
+import DeleteCategoriaModal from "@/components/categorias/DeleteCategoriaModal";
 
 type ApiErrorResponse = {
   error?: string;
@@ -35,9 +36,14 @@ async function buscarCategorias(): Promise<Categoria[]> {
 export default function CategoriasAdminPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [nome, setNome] = useState("");
+
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [excluindoId, setExcluindoId] = useState<number | null>(null);
+  const [excluindo, setExcluindo] = useState(false);
+
+  const [categoriaParaExcluir, setCategoriaParaExcluir] =
+    useState<Categoria | null>(null);
+
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
 
@@ -146,8 +152,22 @@ export default function CategoriasAdminPage() {
         throw new Error("Resposta inválida ao criar a categoria.");
       }
 
+      /*
+       * A API POST retorna pacotes_count: 0.
+       *
+       * Normalizamos explicitamente o valor aqui para impedir que
+       * uma categoria recém-criada entre no estado com undefined.
+       */
+      const categoriaCriada: Categoria = {
+        ...data,
+        pacotes_count:
+          "pacotes_count" in data && typeof data.pacotes_count === "number"
+            ? data.pacotes_count
+            : 0,
+      };
+
       setCategorias((categoriasAtuais) =>
-        [...categoriasAtuais, data].sort((a, b) =>
+        [...categoriasAtuais, categoriaCriada].sort((a, b) =>
           a.nome.localeCompare(b.nome, "pt-BR")
         )
       );
@@ -170,30 +190,50 @@ export default function CategoriasAdminPage() {
     }
   }
 
-  async function handleExcluirCategoria(categoria: Categoria) {
-    const pacotesCount = categoria.pacotes_count ?? 0;
+  function abrirModalExclusao(categoria: Categoria) {
+    /*
+     * Garantimos que o modal sempre receba uma contagem numérica.
+     * Categoria sem pacotes = 0 e, portanto, pode ser excluída.
+     */
+    setCategoriaParaExcluir({
+      ...categoria,
+      pacotes_count: categoria.pacotes_count ?? 0,
+    });
 
-    if (pacotesCount > 0) {
-      setErro(
-        `Não é possível excluir a categoria "${categoria.nome}" porque existem ${pacotesCount} pacote${
-          pacotesCount === 1 ? "" : "s"
-        } relacionado${pacotesCount === 1 ? "" : "s"} a ela.`
-      );
+    setErro(null);
+    setSucesso(null);
+  }
 
+  function fecharModalExclusao() {
+    if (excluindo) {
       return;
     }
 
-    const confirmado = window.confirm(
-      `Excluir a categoria "${categoria.nome}"?\n\nEssa ação não pode ser desfeita.`
-    );
+    setCategoriaParaExcluir(null);
+  }
 
-    if (!confirmado) {
+  async function handleExcluirCategoria() {
+    if (!categoriaParaExcluir) {
+      return;
+    }
+
+    const categoria = categoriaParaExcluir;
+    const pacotesCount = categoria.pacotes_count ?? 0;
+
+    if (pacotesCount > 0) {
+      const mensagem = `Não é possível excluir a categoria "${categoria.nome}" porque existem ${pacotesCount} pacote${
+        pacotesCount === 1 ? "" : "s"
+      } relacionado${pacotesCount === 1 ? "" : "s"} a ela.`;
+
+      setErro(mensagem);
+      toast.error(mensagem);
+
       return;
     }
 
     setErro(null);
     setSucesso(null);
-    setExcluindoId(categoria.id);
+    setExcluindo(true);
 
     try {
       const response = await fetch(
@@ -215,7 +255,9 @@ export default function CategoriasAdminPage() {
         )
       );
 
+      setCategoriaParaExcluir(null);
       setSucesso("Categoria excluída com sucesso.");
+
       toast.success("Categoria excluída com sucesso.");
     } catch (error) {
       console.error("Erro ao excluir categoria:", error);
@@ -228,7 +270,7 @@ export default function CategoriasAdminPage() {
       setErro(mensagem);
       toast.error(mensagem);
     } finally {
-      setExcluindoId(null);
+      setExcluindo(false);
     }
   }
 
@@ -322,10 +364,13 @@ export default function CategoriasAdminPage() {
                 <thead className="bg-surface-muted">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Nome</th>
+
                     <th className="px-4 py-3 font-semibold">Slug</th>
+
                     <th className="px-4 py-3 text-center font-semibold">
                       Pacotes
                     </th>
+
                     <th className="px-4 py-3 text-right font-semibold">
                       Ações
                     </th>
@@ -334,9 +379,8 @@ export default function CategoriasAdminPage() {
 
                 <tbody>
                   {categorias.map((categoria) => {
-                    const pacotesCount = categoria.pacotes_count ?? 0;
+                    const pacotesCount = Number(categoria.pacotes_count ?? 0);
                     const podeExcluir = pacotesCount === 0;
-                    const excluindo = excluindoId === categoria.id;
 
                     return (
                       <tr
@@ -366,24 +410,18 @@ export default function CategoriasAdminPage() {
                         <td className="px-4 py-3 text-right">
                           <button
                             type="button"
-                            onClick={() =>
-                              void handleExcluirCategoria(categoria)
-                            }
-                            disabled={
-                              !podeExcluir || excluindo || excluindoId !== null
-                            }
+                            onClick={() => abrirModalExclusao(categoria)}
+                            disabled={!podeExcluir || excluindo}
                             title={
                               podeExcluir
                                 ? "Excluir categoria"
                                 : `Não é possível excluir: ${pacotesCount} pacote${
                                     pacotesCount === 1 ? "" : "s"
-                                  } relacionado${
-                                    pacotesCount === 1 ? "" : "s"
-                                  }.`
+                                  } relacionado${pacotesCount === 1 ? "" : "s"}.`
                             }
                             className="rounded-md border border-danger px-3 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-40"
                           >
-                            {excluindo ? "Excluindo..." : "Excluir"}
+                            Excluir
                           </button>
                         </td>
                       </tr>
@@ -395,6 +433,13 @@ export default function CategoriasAdminPage() {
           )}
         </section>
       </div>
+
+      <DeleteCategoriaModal
+        categoria={categoriaParaExcluir}
+        loading={excluindo}
+        onCancel={fecharModalExclusao}
+        onConfirm={() => void handleExcluirCategoria()}
+      />
     </main>
   );
 }
