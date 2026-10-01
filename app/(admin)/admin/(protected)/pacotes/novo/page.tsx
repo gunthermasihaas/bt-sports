@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -41,10 +41,6 @@ export default function NovoPacotePage() {
   const [fotoCapa, setFotoCapa] = useState<File | null>(null);
   const [fotoBanner, setFotoBanner] = useState<File | null>(null);
   const [fotoCard, setFotoCard] = useState<File | null>(null);
-
-  const [capaPreviewUrl, setCapaPreviewUrl] = useState<string | undefined>(
-    undefined
-  );
 
   const [formData, setFormData] = useState<PacoteFormState>({
     nome: "",
@@ -98,27 +94,31 @@ export default function NovoPacotePage() {
       }
     }
 
-    void carregarCategorias();
+    const timeoutId = window.setTimeout(() => {
+      void carregarCategorias();
+    }, 0);
 
     return () => {
       active = false;
+      window.clearTimeout(timeoutId);
     };
   }, []);
 
-  useEffect(() => {
+  const capaPreviewUrl = useMemo(() => {
     if (!fotoCapa) {
-      setCapaPreviewUrl(undefined);
-      return;
+      return undefined;
     }
 
-    const objectUrl = URL.createObjectURL(fotoCapa);
-
-    setCapaPreviewUrl(objectUrl);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
+    return URL.createObjectURL(fotoCapa);
   }, [fotoCapa]);
+
+  useEffect(() => {
+    return () => {
+      if (capaPreviewUrl) {
+        URL.revokeObjectURL(capaPreviewUrl);
+      }
+    };
+  }, [capaPreviewUrl]);
 
   function updateField<K extends keyof PacoteFormState>(
     key: K,

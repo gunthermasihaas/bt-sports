@@ -61,6 +61,27 @@ function getApiErrorMessage(data: ApiErrorResponse, fallback: string): string {
   return fallback;
 }
 
+async function fetchUsers(): Promise<User[]> {
+  const response = await fetch("/api/admin/users", {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const data = await parseApiResponse<User[]>(response);
+
+  if (!response.ok) {
+    throw new Error(
+      getApiErrorMessage(data as ApiErrorResponse, "Erro ao carregar usuários")
+    );
+  }
+
+  if (!Array.isArray(data)) {
+    throw new Error("Resposta inválida ao carregar usuários.");
+  }
+
+  return data;
+}
+
 export default function UsersPageClient() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,25 +100,7 @@ export default function UsersPageClient() {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/admin/users", {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      const data = await parseApiResponse<User[]>(response);
-
-      if (!response.ok) {
-        throw new Error(
-          getApiErrorMessage(
-            data as ApiErrorResponse,
-            "Erro ao carregar usuários"
-          )
-        );
-      }
-
-      if (!Array.isArray(data)) {
-        throw new Error("Resposta inválida ao carregar usuários.");
-      }
+      const data = await fetchUsers();
 
       setUsers(data);
     } catch (error) {
@@ -111,7 +114,32 @@ export default function UsersPageClient() {
   }
 
   useEffect(() => {
-    void loadUsers();
+    let active = true;
+
+    fetchUsers()
+      .then((data) => {
+        if (!active) {
+          return;
+        }
+
+        setUsers(data);
+        setLoading(false);
+      })
+      .catch((error: unknown) => {
+        if (!active) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Erro ao carregar usuários";
+
+        toast.error(message);
+        setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const filteredUsers = useMemo(() => {

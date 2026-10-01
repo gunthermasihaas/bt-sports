@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { pacotePatchSchema } from "@/app/(admin)/admin/(protected)/pacotes/novo/schema";
 import { requireRole } from "@/lib/require-role";
 
+const MAX_UPDATE_ATTEMPTS = 3;
+
 type RouteContext = {
   params: Promise<{
     id?: string;
@@ -34,6 +36,16 @@ function isPrismaErrorCode(error: unknown, code: string): boolean {
     "code" in error &&
     error.code === code
   );
+}
+
+function createSlugCandidate(slugBase: string, attempt: number): string {
+  if (attempt === 0) {
+    return slugBase;
+  }
+
+  const suffix = `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
+  return `${slugBase}-${suffix}`;
 }
 
 export async function PATCH(req: Request, context: RouteContext) {
@@ -117,10 +129,10 @@ export async function PATCH(req: Request, context: RouteContext) {
       }
     }
 
-    let novoSlug: string | undefined;
+    let slugBase: string | undefined;
 
     if (data.nome !== undefined && data.nome.trim() !== pacoteExistente.nome) {
-      const slugBase = slugify(data.nome.trim(), {
+      slugBase = slugify(data.nome.trim(), {
         lower: true,
         strict: true,
         trim: true,
@@ -136,80 +148,125 @@ export async function PATCH(req: Request, context: RouteContext) {
           }
         );
       }
-
-      novoSlug = slugBase;
     }
 
-    await prisma.$transaction(async (tx) => {
-      if (data.destaque === true) {
-        await tx.pacote.updateMany({
-          where: {
-            id: {
-              not: pacoteId,
+    for (let attempt = 0; attempt < MAX_UPDATE_ATTEMPTS; attempt += 1) {
+      const novoSlug =
+        slugBase !== undefined
+          ? createSlugCandidate(slugBase, attempt)
+          : undefined;
+
+      try {
+        await prisma.$transaction(async (tx) => {
+          if (data.destaque === true) {
+            await tx.pacote.updateMany({
+              where: {
+                id: {
+                  not: pacoteId,
+                },
+                destaque: true,
+                deleted_at: null,
+              },
+              data: {
+                destaque: false,
+              },
+            });
+          }
+
+          await tx.pacote.update({
+            where: {
+              id: pacoteId,
             },
-            destaque: true,
-            deleted_at: null,
-          },
-          data: {
-            destaque: false,
-          },
+            data: {
+              ...(data.nome !== undefined && {
+                nome: data.nome.trim(),
+              }),
+
+              ...(novoSlug !== undefined && {
+                slug: novoSlug,
+              }),
+
+              ...(data.categoria_id !== undefined && {
+                categoria_id: data.categoria_id,
+              }),
+
+              ...(data.data_inicio !== undefined && {
+                data_inicio:
+                  data.data_inicio === ""
+                    ? null
+                    : new Date(`${data.data_inicio}T00:00:00`),
+              }),
+
+              ...(data.preco !== undefined && {
+                preco: data.preco,
+              }),
+
+              ...(data.moeda !== undefined && {
+                moeda: data.moeda as Moeda,
+              }),
+
+              ...(data.texto_destaque !== undefined && {
+                texto_destaque: data.texto_destaque?.trim() || null,
+              }),
+
+              ...(data.resumo !== undefined && {
+                resumo: data.resumo?.trim() || null,
+              }),
+
+              ...(data.descricao !== undefined && {
+                descricao: data.descricao?.trim() || null,
+              }),
+
+              ...(data.destaque !== undefined && {
+                destaque: data.destaque,
+              }),
+            },
+          });
         });
+
+        return NextResponse.json({
+          ok: true,
+        });
+      } catch (error) {
+        if (isPrismaErrorCode(error, "P2002")) {
+          if (slugBase !== undefined && attempt < MAX_UPDATE_ATTEMPTS - 1) {
+            continue;
+          }
+
+          return NextResponse.json(
+            {
+              error:
+                "Não foi possível atualizar o pacote porque o identificador gerado já está em uso. Tente novamente.",
+            },
+            {
+              status: 409,
+            }
+          );
+        }
+
+        if (isPrismaErrorCode(error, "P2025")) {
+          return NextResponse.json(
+            {
+              error: "Pacote não encontrado",
+            },
+            {
+              status: 404,
+            }
+          );
+        }
+
+        throw error;
       }
+    }
 
-      await tx.pacote.update({
-        where: {
-          id: pacoteId,
-        },
-        data: {
-          ...(data.nome !== undefined && {
-            nome: data.nome.trim(),
-          }),
-
-          ...(novoSlug !== undefined && {
-            slug: novoSlug,
-          }),
-
-          ...(data.categoria_id !== undefined && {
-            categoria_id: data.categoria_id,
-          }),
-
-          ...(data.data_inicio !== undefined && {
-            data_inicio:
-              data.data_inicio === ""
-                ? null
-                : new Date(`${data.data_inicio}T00:00:00`),
-          }),
-
-          ...(data.preco !== undefined && {
-            preco: data.preco,
-          }),
-
-          ...(data.moeda !== undefined && {
-            moeda: data.moeda as Moeda,
-          }),
-
-          ...(data.texto_destaque !== undefined && {
-            texto_destaque: data.texto_destaque?.trim() || null,
-          }),
-
-          ...(data.resumo !== undefined && {
-            resumo: data.resumo?.trim() || null,
-          }),
-
-          ...(data.descricao !== undefined && {
-            descricao: data.descricao?.trim() || null,
-          }),
-
-          ...(data.destaque !== undefined && {
-            destaque: data.destaque,
-          }),
-        },
-      });
-    });
-
-    return NextResponse.json({
-      ok: true,
-    });
+    return NextResponse.json(
+      {
+        error: "Não foi possível atualizar o pacote",
+      },
+      {
+        status: 500,
+      }
+    );
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
@@ -219,29 +276,6 @@ export async function PATCH(req: Request, context: RouteContext) {
         },
         {
           status: 400,
-        }
-      );
-    }
-
-    if (isPrismaErrorCode(error, "P2002")) {
-      return NextResponse.json(
-        {
-          error:
-            "Não foi possível atualizar o pacote porque o identificador gerado já está em uso.",
-        },
-        {
-          status: 409,
-        }
-      );
-    }
-
-    if (isPrismaErrorCode(error, "P2025")) {
-      return NextResponse.json(
-        {
-          error: "Pacote não encontrado",
-        },
-        {
-          status: 404,
         }
       );
     }

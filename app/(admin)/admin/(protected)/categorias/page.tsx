@@ -55,7 +55,13 @@ export default function CategoriasAdminPage() {
   }
 
   useEffect(() => {
-    void carregarCategorias();
+    const timeoutId = window.setTimeout(() => {
+      void carregarCategorias();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

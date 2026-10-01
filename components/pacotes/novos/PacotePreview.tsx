@@ -1,6 +1,9 @@
 "use client";
 
-import PacoteView from "@/components/pacotes/PacoteView";
+import Image from "next/image";
+
+import { formatarDataLonga } from "@/lib/formatarData";
+import { formatarPreco, type Moeda } from "@/types/moedas";
 
 type Props = {
   nome: string;
@@ -8,11 +11,11 @@ type Props = {
     nome: string;
   };
   dataInicio?: Date;
-  textoDestaque: string;
-  resumo: string;
-  descricao: string;
-  preco: number;
-  moeda: "EUR" | "USD" | "BRL" | "GBP";
+  textoDestaque?: string;
+  resumo?: string;
+  descricao?: string;
+  preco?: number;
+  moeda?: Moeda;
   capaUrl?: string;
 };
 
@@ -24,33 +27,90 @@ export default function PacotePreview({
   resumo,
   descricao,
   preco,
-  moeda,
+  moeda = "EUR",
   capaUrl,
 }: Props) {
   return (
-    <section className="overflow-hidden rounded-xl border border-default bg-surface shadow-sm">
-      <div className="border-b border-default bg-surface-muted px-5 py-4 sm:px-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand">
+    <section className="bg-surface">
+      <div className="border-b border-default bg-surface-muted px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           Pré-visualização
         </p>
-
-        <h2 className="mt-1 text-base font-semibold text-admin">
-          Assim o pacote será apresentado ao visitante
-        </h2>
       </div>
 
-      <PacoteView
-        slug="preview"
-        nome={nome || "Nome do pacote"}
-        categoria={categoria}
-        data_inicio={dataInicio}
-        texto_destaque={textoDestaque}
-        resumo={resumo}
-        descricao={descricao}
-        preco={preco}
-        moeda={moeda}
-        capaUrl={capaUrl}
-      />
+      <div className="grid grid-cols-1 gap-8 p-6 md:grid-cols-2">
+        <div className="relative aspect-4/3 overflow-hidden rounded-xl bg-surface-muted">
+          {capaUrl ? (
+            <Image
+              src={capaUrl}
+              alt={nome || "Imagem do pacote"}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-muted">
+              Sem imagem de capa
+            </div>
+          )}
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-5">
+          {categoria && (
+            <span className="inline-block max-w-full truncate self-start rounded-md bg-brand/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand">
+              {categoria.nome}
+            </span>
+          )}
+
+          <div className="space-y-3">
+            <h2 className="wrap-break-word text-2xl font-bold leading-tight text-on-surface sm:text-3xl">
+              {nome || "Nome do pacote"}
+            </h2>
+
+            {dataInicio && (
+              <p className="text-sm font-medium text-on-surface-muted">
+                {formatarDataLonga(dataInicio)}
+              </p>
+            )}
+          </div>
+
+          {textoDestaque && (
+            <p className="wrap-break-word text-lg font-medium text-brand">
+              {textoDestaque}
+            </p>
+          )}
+
+          {resumo && (
+            <p className="wrap-break-word text-sm leading-relaxed text-on-surface-muted">
+              {resumo}
+            </p>
+          )}
+
+          <div className="rounded-xl border border-border-muted bg-surface-muted p-5">
+            <p className="text-xs uppercase tracking-wide text-on-surface-muted">
+              A partir de
+            </p>
+
+            <p className="mt-1 wrap-break-word text-2xl font-bold text-on-surface">
+              {preco !== undefined
+                ? formatarPreco(preco, moeda)
+                : "Sob consulta"}
+            </p>
+          </div>
+
+          {descricao && (
+            <div className="border-t border-default pt-5">
+              <h3 className="text-base font-semibold text-on-surface">
+                Sobre o pacote
+              </h3>
+
+              <div className="mt-3 wrap-break-word whitespace-pre-wrap text-sm leading-relaxed text-on-surface-muted">
+                {descricao}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
