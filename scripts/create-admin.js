@@ -13,15 +13,9 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  const email = "gunther@biarritz.com.br";
+  const email = process.env.ADMIN_EMAIL;
   const name = "Gunther Masi Haas";
-  const password = "Stampede2694!";
-
-  console.log("Removendo usuários existentes...");
-
-  await prisma.user.deleteMany();
-
-  console.log("Usuários removidos.");
+  const password = process.env.ADMIN_PASSWORD;
 
   const passwordHash = await bcrypt.hash(password, 12);
 
