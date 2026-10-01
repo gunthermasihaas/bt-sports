@@ -1,9 +1,32 @@
+import type { Metadata } from "next";
+
 import ContactForm from "@/components/contato/ContactForm";
 
-export const metadata = {
-  title: "Contato | Biarritz Turismo Sports",
-  description:
-    "Entre em contato com a Biarritz Turismo Sports e fale com nossa equipe.",
+const baseUrl = "https://www.biarritz.com.br";
+
+const title = "Contato | Biarritz Turismo Sports";
+
+const description =
+  "Entre em contato com a Biarritz Turismo Sports para obter informações sobre pacotes de turismo esportivo, eventos e experiências.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: "/contato",
+  },
+  openGraph: {
+    title,
+    description,
+    url: `${baseUrl}/contato`,
+    type: "website",
+    siteName: "Biarritz Turismo Sports",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
 };
 
 type Props = {
@@ -26,9 +49,42 @@ export default async function ContatoPage({ searchParams }: Props) {
       ? `Olá, gostaria de receber mais informações sobre o pacote "${pacoteNome}".`
       : "";
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "@id": `${baseUrl}/contato#webpage`,
+    url: `${baseUrl}/contato`,
+    name: title,
+    description,
+    isPartOf: {
+      "@id": `${baseUrl}/#website`,
+    },
+    about: {
+      "@type": "Organization",
+      "@id": `${baseUrl}/#organization`,
+      name: "Biarritz Turismo Sports",
+      url: baseUrl,
+    },
+    mainEntity: {
+      "@type": "Organization",
+      "@id": `${baseUrl}/#organization`,
+      name: "Biarritz Turismo Sports",
+      url: baseUrl,
+    },
+  };
+
   return (
-    <main>
-      <ContactForm mensagemInicial={mensagemInicial} />
-    </main>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd),
+        }}
+      />
+
+      <main>
+        <ContactForm mensagemInicial={mensagemInicial} />
+      </main>
+    </>
   );
 }

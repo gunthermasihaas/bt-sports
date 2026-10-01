@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { TipoFoto } from "@/generated/prisma";
+
 import BreadcrumbJsonLd from "@/app/seo/BreadcrumbJsonLd";
 import PackageJsonLd from "@/app/seo/PackageJsonLd";
 import PacoteView from "@/components/pacotes/PacoteView";
 import { prisma } from "@/lib/prisma";
-import { TipoFoto } from "@/generated/prisma";
 
 type Props = {
   params: Promise<{
@@ -102,10 +103,6 @@ export default async function PacotePage({ params }: Props) {
 
   const pacoteUrl = `https://www.biarritz.com.br/pacotes/${pacote.slug}`;
 
-  const descricao =
-    pacote.resumo ||
-    "Confira este pacote de turismo esportivo da Biarritz Turismo Sports.";
-
   return (
     <>
       <BreadcrumbJsonLd
@@ -134,13 +131,16 @@ export default async function PacotePage({ params }: Props) {
       />
 
       <PackageJsonLd
-        name={pacote.nome}
-        description={descricao}
-        url={pacoteUrl}
-        image={capa?.url}
-        category={pacote.categoria?.nome}
-        price={pacote.preco !== null ? Number(pacote.preco) : undefined}
-        currency={pacote.moeda}
+        nome={pacote.nome}
+        slug={pacote.slug}
+        resumo={pacote.resumo}
+        descricao={pacote.descricao}
+        preco={pacote.preco !== null ? Number(pacote.preco) : null}
+        moeda={pacote.moeda}
+        dataInicio={pacote.data_inicio}
+        categoriaNome={pacote.categoria?.nome}
+        categoriaSlug={pacote.categoria?.slug}
+        imageUrl={capa?.url}
       />
 
       <PacoteView

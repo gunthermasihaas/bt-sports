@@ -297,23 +297,6 @@ export async function DELETE(_req: Request, context: RouteContext) {
       }
     }
 
-    const totalAdmins = await prisma.user.count({
-      where: {
-        role: "ADMIN",
-      },
-    });
-
-    if (user.role === "ADMIN" && totalAdmins <= 1) {
-      return NextResponse.json(
-        {
-          error: "Não é possível excluir o último administrador",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
     await prisma.user.delete({
       where: {
         id,

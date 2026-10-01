@@ -3,20 +3,30 @@ import type { Metadata } from "next";
 import { getPacotesUi, type Order } from "@/lib/getPacotesUi";
 import PacotesGrid from "@/components/pacotes/pacotesGrid";
 import PacotesHeader from "@/components/pacotes/pacotesHeader";
+import PackagesListJsonLd from "@/app/seo/PackagesListJsonLd";
+
+const title = "Pacotes de Turismo Esportivo";
+
+const description =
+  "Confira os pacotes de turismo esportivo da Biarritz Turismo Sports e viva grandes eventos esportivos de perto.";
 
 export const metadata: Metadata = {
-  title: "Pacotes de Turismo Esportivo",
-  description:
-    "Confira os pacotes de turismo esportivo da Biarritz Turismo Sports e viva grandes eventos esportivos de perto.",
+  title,
+  description,
   alternates: {
     canonical: "/pacotes",
   },
   openGraph: {
-    title: "Pacotes de Turismo Esportivo",
-    description:
-      "Confira os pacotes de turismo esportivo da Biarritz Turismo Sports e viva grandes eventos esportivos de perto.",
+    title,
+    description,
     url: "/pacotes",
     type: "website",
+    siteName: "Biarritz Turismo Sports",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
   },
 };
 
@@ -43,9 +53,23 @@ export default async function PacotesPublicos({ searchParams }: Props) {
   const pacotes = await getPacotesUi(order);
 
   return (
-    <div className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-12">
-      <PacotesHeader order={order} />
-      <PacotesGrid pacotes={pacotes} />
-    </div>
+    <>
+      <PackagesListJsonLd
+        items={pacotes.map((pacote, index) => ({
+          name: pacote.nome,
+          url: `https://www.biarritz.com.br/pacotes/${pacote.slug}`,
+          imageUrl: pacote.imageUrl,
+          position: index + 1,
+        }))}
+      />
+
+      <main className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-12">
+        <h1 className="sr-only">Pacotes de Turismo Esportivo</h1>
+
+        <PacotesHeader order={order} />
+
+        <PacotesGrid pacotes={pacotes} />
+      </main>
+    </>
   );
 }

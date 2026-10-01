@@ -1,0 +1,429 @@
+===== ARQUIVOS INSTITUCIONAIS =====
+
+===== data/sobreBiarritz.ts =====
+ARQUIVO NÃO EXISTE
+
+===== components/layout/footer.tsx =====
+"use client";
+
+import { FooterPartners } from "@/components/footer/FooterPartners";
+import { FooterSocial } from "@/components/footer/FooterSocial";
+
+export default function Footer() {
+  return (
+    <section
+      id="parcerias"
+      className="bg-surface-soft text-default py-5 sm:py-16"
+      aria-labelledby="parceiros"
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-20 lg:grid lg:grid-cols-2 lg:gap-24 xl:gap-32">
+          <FooterPartners />
+          <FooterSocial />
+        </div>
+      </div>
+
+      <script async src="https://www.instagram.com/embed.js"></script>
+    </section>
+  );
+}
+
+===== components/layout/header.tsx =====
+"use client";
+
+import { useSession } from "next-auth/react";
+
+import HeaderAdmin from "./header-admin";
+import HeaderPublic from "./header-public";
+
+export default function Header() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return null;
+  }
+
+  const role = session?.user?.role;
+
+  if (role === "ADMIN" || role === "EDITOR") {
+    return <HeaderAdmin />;
+  }
+
+  return <HeaderPublic />;
+}
+
+===== app/(public)/sobre/page.tsx =====
+import type { Metadata } from "next";
+
+import SobreNos from "@/components/about/sobre-nos";
+import NossaHistoria from "@/components/about/história";
+import Filosofia from "@/components/about/filosofia";
+
+const baseUrl = "https://www.biarritz.com.br";
+
+const title = "Sobre a Biarritz Turismo Sports";
+
+const description =
+  "Conheça a Biarritz Turismo Sports, empresa especializada em turismo esportivo, eventos esportivos e experiências para grandes competições.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: "/sobre",
+  },
+  openGraph: {
+    title,
+    description,
+    url: `${baseUrl}/sobre`,
+    type: "website",
+    siteName: "Biarritz Turismo Sports",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
+};
+
+export default function AboutPage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "@id": `${baseUrl}/sobre#webpage`,
+    url: `${baseUrl}/sobre`,
+    name: title,
+    description,
+    isPartOf: {
+      "@id": `${baseUrl}/#website`,
+    },
+    about: {
+      "@type": "Organization",
+      "@id": `${baseUrl}/#organization`,
+      name: "Biarritz Turismo Sports",
+      url: baseUrl,
+    },
+    mainEntity: {
+      "@type": "Organization",
+      "@id": `${baseUrl}/#organization`,
+      name: "Biarritz Turismo Sports",
+      url: baseUrl,
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd),
+        }}
+      />
+
+      <main>
+        <SobreNos />
+        <NossaHistoria />
+        <Filosofia />
+      </main>
+    </>
+  );
+}
+
+===== app/(public)/contato/page.tsx =====
+import type { Metadata } from "next";
+
+import ContactForm from "@/components/contato/ContactForm";
+
+const baseUrl = "https://www.biarritz.com.br";
+
+const title = "Contato | Biarritz Turismo Sports";
+
+const description =
+  "Entre em contato com a Biarritz Turismo Sports para obter informações sobre pacotes de turismo esportivo, eventos e experiências.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: "/contato",
+  },
+  openGraph: {
+    title,
+    description,
+    url: `${baseUrl}/contato`,
+    type: "website",
+    siteName: "Biarritz Turismo Sports",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
+};
+
+type Props = {
+  searchParams: Promise<{
+    pacote?: string;
+    slug?: string;
+  }>;
+};
+
+export default async function ContatoPage({ searchParams }: Props) {
+  const params = await searchParams;
+
+  const pacoteNome =
+    typeof params.pacote === "string" ? params.pacote.trim() : "";
+
+  const pacoteSlug = typeof params.slug === "string" ? params.slug.trim() : "";
+
+  const mensagemInicial =
+    pacoteNome && pacoteSlug
+      ? `Olá, gostaria de receber mais informações sobre o pacote "${pacoteNome}".`
+      : "";
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "@id": `${baseUrl}/contato#webpage`,
+    url: `${baseUrl}/contato`,
+    name: title,
+    description,
+    isPartOf: {
+      "@id": `${baseUrl}/#website`,
+    },
+    about: {
+      "@type": "Organization",
+      "@id": `${baseUrl}/#organization`,
+      name: "Biarritz Turismo Sports",
+      url: baseUrl,
+    },
+    mainEntity: {
+      "@type": "Organization",
+      "@id": `${baseUrl}/#organization`,
+      name: "Biarritz Turismo Sports",
+      url: baseUrl,
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd),
+        }}
+      />
+
+      <main>
+        <ContactForm mensagemInicial={mensagemInicial} />
+      </main>
+    </>
+  );
+}
+
+===== OCORRÊNCIAS DE DADOS INSTITUCIONAIS =====
+app/robots.ts:3:const baseUrl = "https://www.biarritz.com.br";
+app/sitemap.tsx:5:const baseUrl = "https://www.biarritz.com.br";
+app/layout.tsx:3:const baseUrl = "https://www.biarritz.com.br";
+app/layout.tsx:47:    `Pacote de turismo esportivo ${nome} da Biarritz Turismo Sports.`;
+app/layout.tsx:59:      name: "Biarritz Turismo Sports",
+app/(public)/sobre/page.tsx:7:const baseUrl = "https://www.biarritz.com.br";
+app/(public)/sobre/page.tsx:9:const title = "Sobre a Biarritz Turismo Sports";
+app/(public)/sobre/page.tsx:12:  "Conheça a Biarritz Turismo Sports, empresa especializada em turismo esportivo, eventos esportivos e experiências para grandes competições.";
+app/(public)/sobre/page.tsx:25:    siteName: "Biarritz Turismo Sports",
+app/(public)/sobre/page.tsx:48:      name: "Biarritz Turismo Sports",
+app/(public)/sobre/page.tsx:54:      name: "Biarritz Turismo Sports",
+app/(public)/categorias/page.tsx:6:const baseUrl = "https://www.biarritz.com.br";
+app/(public)/categorias/page.tsx:11:  "Explore os pacotes de turismo esportivo da Biarritz Turismo Sports organizados por categoria.";
+app/(public)/categorias/page.tsx:24:    siteName: "Biarritz Turismo Sports",
+app/(public)/categorias/[slug]/page.tsx:56:  const title = `${categoria.nome} | Biarritz Turismo Sports`;
+app/(public)/categorias/[slug]/page.tsx:58:  const description = `Confira os pacotes de turismo esportivo da Biarritz Turismo Sports na categoria ${categoria.nome}.`;
+app/(public)/categorias/[slug]/page.tsx:71:      siteName: "Biarritz Turismo Sports",
+app/(public)/categorias/[slug]/page.tsx:92:  const categoriaUrl = `https://www.biarritz.com.br/categorias/${categoria.slug}`;
+app/(public)/categorias/[slug]/page.tsx:100:            url: "https://www.biarritz.com.br",
+app/(public)/categorias/[slug]/page.tsx:104:            url: "https://www.biarritz.com.br/categorias",
+app/(public)/categorias/[slug]/page.tsx:118:          url: `https://www.biarritz.com.br/pacotes/${pacote.slug}`,
+app/(public)/contato/page.tsx:5:const baseUrl = "https://www.biarritz.com.br";
+app/(public)/contato/page.tsx:7:const title = "Contato | Biarritz Turismo Sports";
+app/(public)/contato/page.tsx:10:  "Entre em contato com a Biarritz Turismo Sports para obter informações sobre pacotes de turismo esportivo, eventos e experiências.";
+app/(public)/contato/page.tsx:23:    siteName: "Biarritz Turismo Sports",
+app/(public)/contato/page.tsx:65:      name: "Biarritz Turismo Sports",
+app/(public)/contato/page.tsx:71:      name: "Biarritz Turismo Sports",
+app/(public)/page.tsx:16:    "Encontre pacotes de turismo esportivo da Biarritz Turismo Sports para viver grandes eventos esportivos com experiências completas.",
+app/(public)/page.tsx:22:    url: "https://www.biarritz.com.br",
+app/(public)/page.tsx:23:    siteName: "Biarritz Turismo Sports",
+app/(public)/page.tsx:26:      "Encontre pacotes de turismo esportivo da Biarritz Turismo Sports para viver grandes eventos esportivos com experiências completas.",
+app/(public)/page.tsx:32:      "Encontre pacotes de turismo esportivo da Biarritz Turismo Sports para viver grandes eventos esportivos com experiências completas.",
+app/(public)/page.tsx:47:          Biarritz Turismo Sports — Turismo Esportivo e Pacotes para Grandes
+app/(public)/pacotes/page.tsx:10:  "Confira os pacotes de turismo esportivo da Biarritz Turismo Sports e viva grandes eventos esportivos de perto.";
+app/(public)/pacotes/page.tsx:23:    siteName: "Biarritz Turismo Sports",
+app/(public)/pacotes/[slug]/page.tsx:48:    "Confira este pacote de turismo esportivo da Biarritz Turismo Sports.";
+app/(public)/pacotes/[slug]/page.tsx:66:      siteName: "Biarritz Turismo Sports",
+app/(public)/pacotes/[slug]/page.tsx:103:  const pacoteUrl = `https://www.biarritz.com.br/pacotes/${pacote.slug}`;
+app/(public)/pacotes/[slug]/page.tsx:107:    "Confira este pacote de turismo esportivo da Biarritz Turismo Sports.";
+app/(public)/pacotes/[slug]/page.tsx:115:            url: "https://www.biarritz.com.br",
+app/(public)/pacotes/[slug]/page.tsx:119:            url: "https://www.biarritz.com.br/pacotes",
+app/(public)/pacotes/[slug]/page.tsx:125:                  url: `https://www.biarritz.com.br/categorias/${pacote.categoria.slug}`,
+app/api/contact/route.ts:2:import nodemailer from "nodemailer";
+app/api/contact/route.ts:14:  email: z
+app/api/contact/route.ts:17:    .email("E-mail inválido")
+app/api/contact/route.ts:18:    .max(254, "O e-mail é muito longo"),
+app/api/contact/route.ts:20:  telefone: z
+app/api/contact/route.ts:23:    .max(30, "O telefone é muito longo")
+app/api/contact/route.ts:134:    const { nome, email, telefone, estado, cidade, mensagem } = result.data;
+app/api/contact/route.ts:140:    const adminEmail = getRequiredEnv("ADMIN_EMAIL");
+app/api/contact/route.ts:148:    const transporter = nodemailer.createTransport({
+app/api/contact/route.ts:159:    const safeEmail = escapeHtml(email);
+app/api/contact/route.ts:160:    const safeTelefone = escapeHtml(telefone || "-");
+app/api/contact/route.ts:167:      to: adminEmail,
+app/api/contact/route.ts:168:      replyTo: email,
+app/api/contact/route.ts:175:        `E-mail: ${email}`,
+app/api/contact/route.ts:176:        `Telefone: ${telefone || "-"}`,
+app/api/contact/route.ts:196:              <strong>E-mail:</strong>
+app/api/contact/route.ts:197:              ${safeEmail}
+app/api/contact/route.ts:201:              <strong>Telefone:</strong>
+app/api/contact/route.ts:202:              ${safeTelefone}
+app/api/admin/users/route.ts:16:  email: z
+app/api/admin/users/route.ts:20:    .email("E-mail inválido")
+app/api/admin/users/route.ts:21:    .max(255, "E-mail muito longo"),
+app/api/admin/users/route.ts:48:        email: "asc",
+app/api/admin/users/route.ts:53:        email: true,
+app/api/admin/users/route.ts:99:    const { name, email, password, role } = result.data;
+app/api/admin/users/route.ts:103:        email,
+app/api/admin/users/route.ts:113:          error: "Já existe um usuário com esse e-mail",
+app/api/admin/users/route.ts:126:        email,
+app/api/admin/users/route.ts:133:        email: true,
+app/api/admin/users/route.ts:147:          error: "Já existe um usuário com esse e-mail",
+app/api/admin/users/[id]/route.ts:9:const PROTECTED_ADMIN_EMAIL = "gunther@biarritz.com.br";
+app/api/admin/users/[id]/route.ts:18:  email: z
+app/api/admin/users/[id]/route.ts:22:    .email("E-mail inválido")
+app/api/admin/users/[id]/route.ts:23:    .max(255, "E-mail muito longo"),
+app/api/admin/users/[id]/route.ts:85:    const { name, email, password, role } = result.data;
+app/api/admin/users/[id]/route.ts:93:        email: true,
+app/api/admin/users/[id]/route.ts:110:      existingUser.email.toLowerCase() === PROTECTED_ADMIN_EMAIL;
+app/api/admin/users/[id]/route.ts:113:      if (email !== PROTECTED_ADMIN_EMAIL) {
+app/api/admin/users/[id]/route.ts:116:            error: "O e-mail da conta principal não pode ser alterado",
+app/api/admin/users/[id]/route.ts:158:      email: string;
+app/api/admin/users/[id]/route.ts:163:      email: isProtectedUser ? PROTECTED_ADMIN_EMAIL : email,
+app/api/admin/users/[id]/route.ts:179:        email: true,
+app/api/admin/users/[id]/route.ts:191:          error: "Já existe um usuário com esse e-mail",
+app/api/admin/users/[id]/route.ts:252:        email: true,
+app/api/admin/users/[id]/route.ts:268:    const isProtectedUser = user.email.toLowerCase() === PROTECTED_ADMIN_EMAIL;
+app/seo/WebsiteJsonLd.tsx:1:const baseUrl = "https://www.biarritz.com.br";
+app/seo/WebsiteJsonLd.tsx:10:        name: "Biarritz Turismo Sports",
+app/seo/WebsiteJsonLd.tsx:19:        name: "Biarritz Turismo Sports",
+app/seo/WebsiteJsonLd.tsx:29:        name: "Biarritz Turismo Sports",
+app/seo/PackageJsonLd.tsx:1:const baseUrl = "https://www.biarritz.com.br";
+app/seo/PackageJsonLd.tsx:45:    `Pacote de turismo esportivo ${nome} da Biarritz Turismo Sports.`;
+app/seo/PackageJsonLd.tsx:57:      name: "Biarritz Turismo Sports",
+app/seo/OrganizationJsonLd.tsx:1:const baseUrl = "https://www.biarritz.com.br";
+app/seo/OrganizationJsonLd.tsx:15:    name: "Biarritz Turismo Sports",
+app/seo/OrganizationJsonLd.tsx:16:    legalName: "Buisson & Cia Ltda",
+app/seo/OrganizationJsonLd.tsx:20:      "Empresa brasileira especializada em turismo esportivo, pacotes de viagem e experiências para grandes eventos esportivos.",
+app/seo/OrganizationJsonLd.tsx:26:      addressLocality: "Porto Alegre",
+app/seo/OrganizationJsonLd.tsx:32:    email: "flavio@biarritz.com.br",
+app/seo/OrganizationJsonLd.tsx:35:      "https://www.instagram.com/biarritzsports/",
+app/seo/OrganizationJsonLd.tsx:36:      "https://www.facebook.com/biarritzsports/",
+app/seo/OrganizationJsonLd.tsx:37:      "https://www.biarritz.net.br/",
+app/seo/OrganizationJsonLd.tsx:48:        propertyID: "CADASTUR",
+app/seo/OrganizationJsonLd.tsx:65:      name: "Brasil",
+app/seo/OrganizationJsonLd.tsx:83:      name: "Véronique Buisson Masi",
+app/seo/OrganizationJsonLd.tsx:89:      email: "flavio@biarritz.com.br",
+app/(admin)/admin/login/page.tsx:33:      email: formData.get("email"),
+app/(admin)/admin/login/page.tsx:43:          ? "Email ou senha inválidos"
+app/(admin)/admin/login/page.tsx:85:              Email
+app/(admin)/admin/login/page.tsx:89:              name="email"
+app/(admin)/admin/login/page.tsx:90:              type="email"
+components/footer/FooterPartners.tsx:1:import { parceiros } from "@/data/sobreBiarritz";
+components/footer/FooterSocial.tsx:5:import { faFacebookF, faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+components/footer/FooterSocial.tsx:26:          className="instagram-media"
+components/footer/FooterSocial.tsx:27:          data-instgrm-permalink="https://www.instagram.com/biarritzsports/"
+components/footer/FooterSocial.tsx:39:          <FontAwesomeIcon icon={faFacebookF} className="w-4 h-4" />
+components/footer/FooterSocial.tsx:42:            href="https://www.facebook.com/biarritzsports/"
+components/footer/FooterSocial.tsx:47:            /biarritzturismosports
+components/footer/FooterSocial.tsx:70:        src="https://www.instagram.com/embed.js"
+components/layout/footer.tsx:20:      <script async src="https://www.instagram.com/embed.js"></script>
+components/layout/header-admin.tsx:83:          Biarritz Turismo Sports
+components/layout/header-public.tsx:15:          Biarritz Turismo Sports
+components/about/filosofia.tsx:25:              <strong className="text-brand-dark">Biarritz Turismo</strong>, a{" "}
+components/about/história.tsx:19:            <strong className="text-brand-dark">Véronique Buisson Masi</strong>,
+components/about/história.tsx:24:            para o Brasil, com sede em Porto Alegre, RS, atendemos todo o
+components/about/história.tsx:25:            mercado brasileiro.
+components/about/história.tsx:30:            <strong className="text-brand-dark">Buisson &amp; Cia Ltda</strong>{" "}
+components/about/história.tsx:32:            <strong className="text-brand-dark">CADASTUR</strong>, parceira
+components/about/história.tsx:33:            oficial da <strong className="text-brand-dark">Atout France</strong>
+components/about/sobre-nos.tsx:1:import { links, stats } from "@/data/sobreBiarritz";
+components/about/sobre-nos.tsx:7:      aria-labelledby="sobre-biarritz"
+components/about/sobre-nos.tsx:12:            id="sobre-biarritz"
+components/about/sobre-nos.tsx:16:            <span className="font-extrabold">Biarritz Turismo Sports</span>
+components/about/sobre-nos.tsx:20:            A Biarritz Sports é especializada na criação, planejamento e
+components/contato/EstadoSelect.tsx:29:        <option value="FORA">Fora do Brasil</option>
+components/contato/ContactForm.tsx:28:  const [emailErro, setEmailErro] = useState("");
+components/contato/ContactForm.tsx:35:  function validarEmail(valor: string) {
+components/contato/ContactForm.tsx:36:    const email = valor.trim();
+components/contato/ContactForm.tsx:38:    if (!email) {
+components/contato/ContactForm.tsx:39:      setEmailErro("E-mail é obrigatório");
+components/contato/ContactForm.tsx:45:    setEmailErro(regex.test(email) ? "" : "E-mail inválido");
+components/contato/ContactForm.tsx:59:    const email = String(formData.get("email") ?? "").trim();
+components/contato/ContactForm.tsx:60:    const telefone = String(formData.get("telefone") ?? "").trim();
+components/contato/ContactForm.tsx:63:    validarEmail(email);
+components/contato/ContactForm.tsx:70:    if (!email) {
+components/contato/ContactForm.tsx:71:      setErroEnvio("E-mail é obrigatório.");
+components/contato/ContactForm.tsx:75:    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+components/contato/ContactForm.tsx:76:      setErroEnvio("Informe um e-mail válido.");
+components/contato/ContactForm.tsx:91:      email,
+components/contato/ContactForm.tsx:92:      telefone,
+components/contato/ContactForm.tsx:136:      setEmailErro("");
+components/contato/ContactForm.tsx:150:          Fale com <span className="text-brand">a Biarritz Turismo Sports</span>
+components/contato/ContactForm.tsx:165:          name="email"
+components/contato/ContactForm.tsx:166:          type="email"
+components/contato/ContactForm.tsx:167:          label="E-mail"
+components/contato/ContactForm.tsx:169:          onBlur={(e) => validarEmail(e.target.value)}
+components/contato/ContactForm.tsx:170:          error={emailErro}
+components/contato/ContactForm.tsx:174:          name="telefone"
+components/contato/ContactForm.tsx:176:          label="Telefone"
+components/contato/ContactForm.tsx:224:          disabled={loading || !!emailErro}
+components/contato/ContactForm.tsx:228:              loading || emailErro
+components/users/UsersPageClient.tsx:155:        user.email.toLowerCase().includes(normalizedSearch) ||
+components/users/UsersPageClient.tsx:177:      email: user.email,
+components/users/UsersPageClient.tsx:202:          email: string;
+components/users/UsersPageClient.tsx:207:          email: formData.email,
+components/users/UsersPageClient.tsx:238:          email: formData.email,
+components/users/UsersToolbar.tsx:26:            placeholder="Buscar por nome, e-mail ou função..."
+components/users/UsersTable.tsx:15:        <span>E-mail</span>
+components/users/user-types.ts:6:  email: string;
+components/users/user-types.ts:14:  email: string;
+components/users/user-types.ts:21:  email: "",
+components/users/UserCard.tsx:30:      .toUpperCase() || user.email.slice(0, 2).toUpperCase();
+components/users/UserCard.tsx:45:            {user.email}
+components/users/UserCard.tsx:51:        {user.email}
+components/users/UserCard.tsx:72:          disabled={user.email.toLowerCase() === "gunther@biarritz.com.br"}
+components/users/DeleteUserModal.tsx:27:      description={`O acesso de ${user.email} será removido. Esta ação não pode ser desfeita.`}
+components/users/UserFormModal.tsx:18:const PROTECTED_ADMIN_EMAIL = "gunther@biarritz.com.br";
+components/users/UserFormModal.tsx:53:  const isProtectedUser = user?.email.toLowerCase() === PROTECTED_ADMIN_EMAIL;
+components/users/UserFormModal.tsx:125:              htmlFor="user-email"
+components/users/UserFormModal.tsx:128:              E-mail
+components/users/UserFormModal.tsx:132:              id="user-email"
+components/users/UserFormModal.tsx:133:              type="email"
+components/users/UserFormModal.tsx:134:              value={form.email}
+components/users/UserFormModal.tsx:138:                  email: event.target.value,
+components/users/UserFormModal.tsx:143:              autoComplete="email"
+components/users/UserFormModal.tsx:150:                Esta é a conta administrativa principal e o e-mail não pode ser
+data/sobreBiarritz.tsx:58:    name: "Atout France",
+lib/require-admin.ts:9:  email?: string | null;
+lib/require-role.ts:11:  email?: string | null;
+lib/auth.ts:8:function normalizeEmail(value: string): string {
+lib/auth.ts:24:        email: { label: "Email", type: "email" },
+lib/auth.ts:29:        if (!credentials?.email || !credentials?.password) {
+lib/auth.ts:33:        const email = normalizeEmail(credentials.email);
+lib/auth.ts:36:          const rateLimit = await loginRateLimit.limit(email);
+lib/auth.ts:53:          where: { email },
+lib/auth.ts:71:          email: user.email,
+
+===== ARQUIVOS QUE PODEM CONTER LOGO OU IDENTIDADE =====
+components/footer/FooterPartners.tsx
+components/footer/FooterSocial.tsx
+components/layout/footer.tsx
+components/about/sobre-nos.tsx
+data/sobreBiarritz.tsx
+public/img/logo site.jpeg

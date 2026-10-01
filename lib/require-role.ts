@@ -1,19 +1,10 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import type { Session } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 
 export type UserRole = "ADMIN" | "EDITOR";
-
-type SessionUser = {
-  id?: string;
-  role?: string;
-  email?: string | null;
-};
-
-type Session = {
-  user?: SessionUser;
-};
 
 type RequireRoleResult =
   | {
@@ -26,9 +17,9 @@ type RequireRoleResult =
     };
 
 export async function requireRole(
-  allowedRoles: UserRole[]
+  allowedRoles: readonly UserRole[]
 ): Promise<RequireRoleResult> {
-  const session = (await getServerSession(authOptions)) as Session | null;
+  const session = await getServerSession(authOptions);
 
   if (!session?.user) {
     return {

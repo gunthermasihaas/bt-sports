@@ -1,43 +1,38 @@
-type CategoryJsonLdItem = {
+const baseUrl = "https://www.biarritz.com.br";
+
+type PackagesListJsonLdItem = {
   name: string;
   url: string;
+  imageUrl?: string;
   position: number;
 };
 
-type CategoryJsonLdProps = {
-  name: string;
-  url: string;
-  items: CategoryJsonLdItem[];
+type PackagesListJsonLdProps = {
+  items: PackagesListJsonLdItem[];
 };
 
-const baseUrl = "https://www.biarritz.com.br";
-
-export default function CategoryJsonLd({
-  name,
-  url,
-  items,
-}: CategoryJsonLdProps) {
+export default function PackagesListJsonLd({ items }: PackagesListJsonLdProps) {
   const data = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": `${url}#webpage`,
-    url,
-    name,
+    "@id": `${baseUrl}/pacotes#webpage`,
+    name: "Pacotes de Turismo Esportivo",
+    url: `${baseUrl}/pacotes`,
+    description:
+      "Confira os pacotes de turismo esportivo da Biarritz Turismo Sports e viva grandes eventos esportivos de perto.",
     isPartOf: {
       "@id": `${baseUrl}/#website`,
     },
-    about: {
-      "@id": `${baseUrl}/#organization`,
-    },
     mainEntity: {
       "@type": "ItemList",
-      "@id": `${url}#itemlist`,
+      "@id": `${baseUrl}/pacotes#itemlist`,
       numberOfItems: items.length,
       itemListElement: items.map((item) => ({
         "@type": "ListItem",
         position: item.position,
         name: item.name,
         url: item.url,
+        ...(item.imageUrl ? { image: item.imageUrl } : {}),
       })),
     },
   };

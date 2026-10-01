@@ -1,5 +1,3 @@
-"use client";
-
 import { FooterPartners } from "@/components/footer/FooterPartners";
 import { FooterSocial } from "@/components/footer/FooterSocial";
 
@@ -7,7 +5,7 @@ export default function Footer() {
   return (
     <section
       id="parcerias"
-      className="bg-surface-soft text-default py-5 sm:py-16"
+      className="bg-surface-soft py-5 text-default sm:py-16"
       aria-labelledby="parceiros"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -17,7 +15,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <script async src="https://www.instagram.com/embed.js"></script>
+      <script async src="https://www.instagram.com/embed.js" />
     </section>
   );
 }

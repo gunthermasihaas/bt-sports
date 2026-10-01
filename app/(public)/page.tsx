@@ -59,8 +59,14 @@ export default async function Home() {
           />
         )}
 
-        <section className="bg-surface-muted px-6 py-12 text-color-text">
-          <h2 className="mb-6 text-center text-xl font-semibold">
+        <section
+          className="bg-surface-muted px-6 py-12 text-color-text"
+          aria-labelledby="experiencias-heading"
+        >
+          <h2
+            id="experiencias-heading"
+            className="mb-6 text-center text-xl font-semibold"
+          >
             <span className="text-brand">Escolha</span> sua próxima experiência
           </h2>
 

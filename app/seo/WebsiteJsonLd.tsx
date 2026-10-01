@@ -1,27 +1,29 @@
+const baseUrl = "https://www.biarritz.com.br";
+
 export default function WebsiteJsonLd() {
   const data = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebSite",
-        "@id": "https://www.biarritz.com.br/#website",
-        url: "https://www.biarritz.com.br",
+        "@id": `${baseUrl}/#website`,
+        url: baseUrl,
         name: "Biarritz Turismo Sports",
         publisher: {
-          "@id": "https://www.biarritz.com.br/#organization",
+          "@id": `${baseUrl}/#organization`,
         },
         inLanguage: "pt-BR",
       },
       {
         "@type": "WebPage",
-        "@id": "https://www.biarritz.com.br/#webpage",
-        url: "https://www.biarritz.com.br",
+        "@id": `${baseUrl}/#webpage`,
+        url: baseUrl,
         name: "Biarritz Turismo Sports",
         isPartOf: {
-          "@id": "https://www.biarritz.com.br/#website",
+          "@id": `${baseUrl}/#website`,
         },
         about: {
-          "@id": "https://www.biarritz.com.br/#organization",
+          "@id": `${baseUrl}/#organization`,
         },
         inLanguage: "pt-BR",
       },

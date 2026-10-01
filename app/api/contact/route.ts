@@ -65,6 +65,12 @@ function getRequiredEnv(name: string): string {
 }
 
 function getClientIp(req: Request): string {
+  const realIp = req.headers.get("x-real-ip")?.trim();
+
+  if (realIp) {
+    return realIp;
+  }
+
   const forwardedFor = req.headers.get("x-forwarded-for");
 
   if (forwardedFor) {
@@ -75,12 +81,6 @@ function getClientIp(req: Request): string {
     }
   }
 
-  const realIp = req.headers.get("x-real-ip")?.trim();
-
-  if (realIp) {
-    return realIp;
-  }
-
   return "unknown";
 }
 
@@ -88,32 +88,44 @@ export async function POST(req: Request) {
   try {
     const clientIp = getClientIp(req);
 
+    let rateLimit;
+
     try {
-      const rateLimit = await contactRateLimit.limit(clientIp);
-
-      if (!rateLimit.success) {
-        const retryAfter = Math.max(
-          1,
-          Math.ceil((rateLimit.reset - Date.now()) / 1000)
-        );
-
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Muitas tentativas. Tente novamente mais tarde.",
-          },
-          {
-            status: 429,
-            headers: {
-              "Retry-After": String(retryAfter),
-              "X-RateLimit-Limit": String(rateLimit.limit),
-              "X-RateLimit-Remaining": String(rateLimit.remaining),
-            },
-          }
-        );
-      }
+      rateLimit = await contactRateLimit.limit(clientIp);
     } catch (error) {
       console.error("POST /api/contact rate limit", error);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Serviço temporariamente indisponível",
+        },
+        {
+          status: 503,
+        }
+      );
+    }
+
+    if (!rateLimit.success) {
+      const retryAfter = Math.max(
+        1,
+        Math.ceil((rateLimit.reset - Date.now()) / 1000)
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Muitas tentativas. Tente novamente mais tarde.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(retryAfter),
+            "X-RateLimit-Limit": String(rateLimit.limit),
+            "X-RateLimit-Remaining": String(rateLimit.remaining),
+          },
+        }
+      );
     }
 
     const body: unknown = await req.json();
@@ -127,7 +139,9 @@ export async function POST(req: Request) {
           error: "Dados inválidos",
           details: result.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 

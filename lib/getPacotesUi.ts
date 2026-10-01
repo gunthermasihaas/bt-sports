@@ -8,6 +8,7 @@ export type Order = "nome" | "data" | "preco-asc" | "preco-desc";
 export type PacoteUi = {
   id: number;
   nome: string;
+  slug: string;
   resumo: string;
   preco: number;
   moeda: Moeda;
@@ -63,6 +64,7 @@ export async function getPacotesUi(order: Order): Promise<PacoteUi[]> {
   return pacotesDb.map((pacote) => ({
     id: pacote.id,
     nome: pacote.nome,
+    slug: pacote.slug,
     resumo: pacote.resumo ?? "",
     preco: Number(pacote.preco ?? 0),
     moeda: pacote.moeda,

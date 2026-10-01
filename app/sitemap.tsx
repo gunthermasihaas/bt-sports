@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         updated_at: true,
       },
     }),
+
     prisma.categoriaViagem.findMany({
       where: {
         pacotes: {
@@ -33,31 +34,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const paginasPrincipais: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,
     },
     {
       url: `${baseUrl}/pacotes`,
-      lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/categorias`,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
       url: `${baseUrl}/sobre`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
       url: `${baseUrl}/contato`,
-      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.5,
     },

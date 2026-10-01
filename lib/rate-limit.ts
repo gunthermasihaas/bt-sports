@@ -14,3 +14,9 @@ export const loginRateLimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(10, "15 m"),
   prefix: "bt-sports:login",
 });
+
+export const loginIpRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, "15 m"),
+  prefix: "bt-sports:login-ip",
+});

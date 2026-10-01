@@ -19,38 +19,38 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteName = "Biarritz Turismo Sports";
+
+const siteDescription =
+  "Pacotes e experiências de turismo esportivo para quem quer viver grandes eventos esportivos de perto.";
+
+const baseUrl = "https://www.biarritz.com.br";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.biarritz.com.br"),
+  metadataBase: new URL(baseUrl),
 
   title: {
-    default: "Biarritz Turismo Sports",
-    template: "%s | Biarritz Turismo Sports",
+    default: siteName,
+    template: `%s | ${siteName}`,
   },
 
-  description:
-    "Pacotes e experiências de turismo esportivo para quem quer viver grandes eventos esportivos de perto.",
+  description: siteDescription,
 
-  applicationName: "Biarritz Turismo Sports",
-
-  alternates: {
-    canonical: "/",
-  },
+  applicationName: siteName,
 
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    url: "https://www.biarritz.com.br",
-    siteName: "Biarritz Turismo Sports",
-    title: "Biarritz Turismo Sports",
-    description:
-      "Pacotes e experiências de turismo esportivo para quem quer viver grandes eventos esportivos de perto.",
+    url: baseUrl,
+    siteName,
+    title: siteName,
+    description: siteDescription,
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "Biarritz Turismo Sports",
-    description:
-      "Pacotes e experiências de turismo esportivo para quem quer viver grandes eventos esportivos de perto.",
+    title: siteName,
+    description: siteDescription,
   },
 
   robots: {
