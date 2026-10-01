@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import type { Categoria } from "@/types/categoria";
 
@@ -8,11 +9,35 @@ type ApiErrorResponse = {
   error?: string;
 };
 
+async function buscarCategorias(): Promise<Categoria[]> {
+  const response = await fetch("/api/admin/categorias-viagem", {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const data = (await response.json()) as Categoria[] | ApiErrorResponse;
+
+  if (!response.ok) {
+    throw new Error(
+      "error" in data && data.error
+        ? data.error
+        : "Não foi possível carregar as categorias."
+    );
+  }
+
+  if (!Array.isArray(data)) {
+    throw new Error("Resposta inválida ao carregar as categorias.");
+  }
+
+  return data;
+}
+
 export default function CategoriasAdminPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [nome, setNome] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [excluindoId, setExcluindoId] = useState<number | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
 
@@ -21,24 +46,7 @@ export default function CategoriasAdminPage() {
     setErro(null);
 
     try {
-      const response = await fetch("/api/admin/categorias-viagem", {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      const data = (await response.json()) as Categoria[] | ApiErrorResponse;
-
-      if (!response.ok) {
-        throw new Error(
-          "error" in data && data.error
-            ? data.error
-            : "Não foi possível carregar as categorias."
-        );
-      }
-
-      if (!Array.isArray(data)) {
-        throw new Error("Resposta inválida ao carregar as categorias.");
-      }
+      const data = await buscarCategorias();
 
       setCategorias(data);
     } catch (error) {
@@ -55,12 +63,39 @@ export default function CategoriasAdminPage() {
   }
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void carregarCategorias();
-    }, 0);
+    let ativo = true;
+
+    buscarCategorias()
+      .then((data) => {
+        if (!ativo) {
+          return;
+        }
+
+        setCategorias(data);
+      })
+      .catch((error: unknown) => {
+        if (!ativo) {
+          return;
+        }
+
+        console.error("Erro ao carregar categorias:", error);
+
+        setErro(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível carregar as categorias."
+        );
+      })
+      .finally(() => {
+        if (!ativo) {
+          return;
+        }
+
+        setCarregando(false);
+      });
 
     return () => {
-      window.clearTimeout(timeoutId);
+      ativo = false;
     };
   }, []);
 
@@ -119,16 +154,81 @@ export default function CategoriasAdminPage() {
 
       setNome("");
       setSucesso("Categoria criada com sucesso.");
+      toast.success("Categoria criada com sucesso.");
     } catch (error) {
       console.error("Erro ao criar categoria:", error);
 
-      setErro(
+      const mensagem =
         error instanceof Error
           ? error.message
-          : "Não foi possível criar a categoria."
-      );
+          : "Não foi possível criar a categoria.";
+
+      setErro(mensagem);
+      toast.error(mensagem);
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function handleExcluirCategoria(categoria: Categoria) {
+    const pacotesCount = categoria.pacotes_count ?? 0;
+
+    if (pacotesCount > 0) {
+      setErro(
+        `Não é possível excluir a categoria "${categoria.nome}" porque existem ${pacotesCount} pacote${
+          pacotesCount === 1 ? "" : "s"
+        } relacionado${pacotesCount === 1 ? "" : "s"} a ela.`
+      );
+
+      return;
+    }
+
+    const confirmado = window.confirm(
+      `Excluir a categoria "${categoria.nome}"?\n\nEssa ação não pode ser desfeita.`
+    );
+
+    if (!confirmado) {
+      return;
+    }
+
+    setErro(null);
+    setSucesso(null);
+    setExcluindoId(categoria.id);
+
+    try {
+      const response = await fetch(
+        `/api/admin/categorias-viagem?id=${categoria.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = (await response.json()) as ApiErrorResponse;
+
+      if (!response.ok) {
+        throw new Error(data.error || "Não foi possível excluir a categoria.");
+      }
+
+      setCategorias((categoriasAtuais) =>
+        categoriasAtuais.filter(
+          (categoriaAtual) => categoriaAtual.id !== categoria.id
+        )
+      );
+
+      setSucesso("Categoria excluída com sucesso.");
+      toast.success("Categoria excluída com sucesso.");
+    } catch (error) {
+      console.error("Erro ao excluir categoria:", error);
+
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível excluir a categoria.";
+
+      setErro(mensagem);
+      toast.error(mensagem);
+    } finally {
+      setExcluindoId(null);
     }
   }
 
@@ -218,21 +318,77 @@ export default function CategoriasAdminPage() {
             </div>
           ) : (
             <div className="mt-4 overflow-x-auto rounded-lg border border-default">
-              <table className="w-full min-w-[420px] text-left text-sm">
+              <table className="w-full min-w-175 text-left text-sm">
                 <thead className="bg-surface-muted">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Nome</th>
                     <th className="px-4 py-3 font-semibold">Slug</th>
+                    <th className="px-4 py-3 text-center font-semibold">
+                      Pacotes
+                    </th>
+                    <th className="px-4 py-3 text-right font-semibold">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {categorias.map((categoria) => (
-                    <tr key={categoria.id} className="border-t border-default">
-                      <td className="px-4 py-3">{categoria.nome}</td>
-                      <td className="px-4 py-3 text-muted">{categoria.slug}</td>
-                    </tr>
-                  ))}
+                  {categorias.map((categoria) => {
+                    const pacotesCount = categoria.pacotes_count ?? 0;
+                    const podeExcluir = pacotesCount === 0;
+                    const excluindo = excluindoId === categoria.id;
+
+                    return (
+                      <tr
+                        key={categoria.id}
+                        className="border-t border-default"
+                      >
+                        <td className="px-4 py-3 font-medium">
+                          {categoria.nome}
+                        </td>
+
+                        <td className="px-4 py-3 text-muted">
+                          {categoria.slug}
+                        </td>
+
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className={
+                              pacotesCount > 0
+                                ? "font-medium text-admin"
+                                : "text-muted"
+                            }
+                          >
+                            {pacotesCount}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleExcluirCategoria(categoria)
+                            }
+                            disabled={
+                              !podeExcluir || excluindo || excluindoId !== null
+                            }
+                            title={
+                              podeExcluir
+                                ? "Excluir categoria"
+                                : `Não é possível excluir: ${pacotesCount} pacote${
+                                    pacotesCount === 1 ? "" : "s"
+                                  } relacionado${
+                                    pacotesCount === 1 ? "" : "s"
+                                  }.`
+                            }
+                            className="rounded-md border border-danger px-3 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {excluindo ? "Excluindo..." : "Excluir"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
