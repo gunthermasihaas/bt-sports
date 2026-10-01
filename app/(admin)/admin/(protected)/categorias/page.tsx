@@ -2,12 +2,10 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-type Categoria = {
-  id: number;
-  nome: string;
-  slug: string;
-  created_at: string;
-  updated_at: string;
+import type { Categoria } from "@/types/categoria";
+
+type ApiErrorResponse = {
+  error?: string;
 };
 
 export default function CategoriasAdminPage() {
@@ -28,12 +26,18 @@ export default function CategoriasAdminPage() {
         cache: "no-store",
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as Categoria[] | ApiErrorResponse;
 
       if (!response.ok) {
         throw new Error(
-          data.error || "Não foi possível carregar as categorias."
+          "error" in data && data.error
+            ? data.error
+            : "Não foi possível carregar as categorias."
         );
+      }
+
+      if (!Array.isArray(data)) {
+        throw new Error("Resposta inválida ao carregar as categorias.");
       }
 
       setCategorias(data);
@@ -80,10 +84,25 @@ export default function CategoriasAdminPage() {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as Categoria | ApiErrorResponse;
 
       if (!response.ok) {
-        throw new Error(data.error || "Não foi possível criar a categoria.");
+        throw new Error(
+          "error" in data && data.error
+            ? data.error
+            : "Não foi possível criar a categoria."
+        );
+      }
+
+      if (
+        !("id" in data) ||
+        !("nome" in data) ||
+        !("slug" in data) ||
+        typeof data.id !== "number" ||
+        typeof data.nome !== "string" ||
+        typeof data.slug !== "string"
+      ) {
+        throw new Error("Resposta inválida ao criar a categoria.");
       }
 
       setCategorias((categoriasAtuais) =>

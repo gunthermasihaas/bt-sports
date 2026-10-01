@@ -7,10 +7,7 @@ import { useMemo } from "react";
 
 import { formatarDataLonga } from "@/lib/formatarData";
 import { formatarPreco, type Moeda } from "@/types/moedas";
-
-type Categoria = {
-  nome: string;
-};
+import type { Categoria } from "@/types/categoria";
 
 type Props = {
   slug: string;

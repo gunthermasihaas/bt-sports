@@ -9,12 +9,8 @@ import ImagensPacote from "@/components/pacotes/novos/ImagensPacote";
 import ConteudoPacote from "@/components/pacotes/novos/ConteudoPacote";
 import StickyActions from "@/components/pacotes/novos/StickyActions";
 import PacotePreview from "@/components/pacotes/novos/PacotePreview";
-import { PacoteFormState } from "@/types/pacoteForm";
-
-type Categoria = {
-  id: number;
-  nome: string;
-};
+import type { Categoria } from "@/types/categoria";
+import type { PacoteFormState } from "@/types/pacoteForm";
 
 type ApiErrorResponse = {
   error?: string;

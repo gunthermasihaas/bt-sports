@@ -5,12 +5,7 @@ import CategoriaSlide from "./CategoriaSlide";
 import CategoriaNavButton from "./CategoriaNavButton";
 import "swiper/css";
 import "swiper/css/navigation";
-
-export type Categoria = {
-  id: number;
-  nome: string;
-  slug: string;
-};
+import type { Categoria } from "@/types/categoria";
 
 export default function CategoriasCarousel({
   categorias,

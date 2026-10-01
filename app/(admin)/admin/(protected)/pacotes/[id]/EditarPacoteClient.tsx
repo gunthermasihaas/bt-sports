@@ -12,11 +12,7 @@ import ConfirmModal from "@/components/ui/ConfirmModal";
 import PacotePreview from "@/components/pacotes/novos/PacotePreview";
 
 import { PacoteFormState } from "@/types/pacoteForm";
-
-type Categoria = {
-  id: number;
-  nome: string;
-};
+import type { Categoria } from "@/types/categoria";
 
 type PacoteEditavel = {
   id: number;

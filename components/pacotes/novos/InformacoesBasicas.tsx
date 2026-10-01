@@ -7,14 +7,10 @@ import Section from "./Section";
 import Field from "./Field";
 import { PacoteFormState } from "@/types/pacoteForm";
 import { MOEDAS, type Moeda } from "@/types/moedas";
+import type { Categoria } from "@/types/categoria";
 
 const inputBase =
   "mt-2 w-full rounded-md bg-surface px-3.5 py-2 border border-default text-admin focus-ring-brand";
-
-type Categoria = {
-  id: number;
-  nome: string;
-};
 
 type Props = {
   categorias: Categoria[];
@@ -105,8 +101,10 @@ export default function InformacoesBasicas({
         typeof data !== "object" ||
         !("id" in data) ||
         !("nome" in data) ||
+        !("slug" in data) ||
         typeof data.id !== "number" ||
-        typeof data.nome !== "string"
+        typeof data.nome !== "string" ||
+        typeof data.slug !== "string"
       ) {
         throw new Error("Resposta inválida ao criar categoria");
       }
@@ -114,6 +112,7 @@ export default function InformacoesBasicas({
       const categoriaCriada: Categoria = {
         id: data.id,
         nome: data.nome,
+        slug: data.slug,
       };
 
       setCategorias((prev) => {
