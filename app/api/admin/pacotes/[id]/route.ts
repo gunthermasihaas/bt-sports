@@ -338,63 +338,42 @@ export async function DELETE(_req: Request, context: RouteContext) {
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.pacote.update({
+      await tx.pacote.delete({
         where: {
           id: pacoteId,
-        },
-        data: {
-          deleted_at: new Date(),
-          destaque: false,
         },
       });
 
       if (pacote.destaque) {
-        const destaqueExistente = await tx.pacote.findFirst({
+        const novoDestaque = await tx.pacote.findFirst({
           where: {
-            id: {
-              not: pacoteId,
-            },
             deleted_at: null,
-            destaque: true,
+            destaque: false,
+          },
+          orderBy: {
+            created_at: "desc",
           },
           select: {
             id: true,
           },
         });
 
-        if (!destaqueExistente) {
-          const novoDestaque = await tx.pacote.findFirst({
+        if (novoDestaque) {
+          await tx.pacote.update({
             where: {
-              id: {
-                not: pacoteId,
-              },
-              deleted_at: null,
-              destaque: false,
+              id: novoDestaque.id,
             },
-            orderBy: {
-              created_at: "desc",
-            },
-            select: {
-              id: true,
+            data: {
+              destaque: true,
             },
           });
-
-          if (novoDestaque) {
-            await tx.pacote.update({
-              where: {
-                id: novoDestaque.id,
-              },
-              data: {
-                destaque: true,
-              },
-            });
-          }
         }
       }
     });
 
     return NextResponse.json({
       ok: true,
+      id: pacoteId,
     });
   } catch (error) {
     if (isPrismaErrorCode(error, "P2025")) {
@@ -408,11 +387,23 @@ export async function DELETE(_req: Request, context: RouteContext) {
       );
     }
 
+    if (isPrismaErrorCode(error, "P2003")) {
+      return NextResponse.json(
+        {
+          error:
+            "Não foi possível excluir o pacote porque existem registros relacionados.",
+        },
+        {
+          status: 409,
+        }
+      );
+    }
+
     console.error("DELETE /api/admin/pacotes/[id]", error);
 
     return NextResponse.json(
       {
-        error: "Erro ao arquivar pacote",
+        error: "Erro ao excluir pacote",
       },
       {
         status: 500,
