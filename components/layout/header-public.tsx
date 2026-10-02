@@ -1,10 +1,8 @@
-"use client";
-
 import Link from "next/link";
 
+import { DesktopNav } from "../header/DesktopNav";
 import { HeaderShell } from "../header/HeaderShell";
 import { MobileMenu } from "../header/MobileMenu";
-import { DesktopNav } from "../header/DesktopNav";
 
 export default function HeaderPublic() {
   return (
@@ -25,6 +23,7 @@ export default function HeaderPublic() {
             <span className="block text-sm font-extrabold tracking-tight text-default">
               BIARRITZ
             </span>
+
             <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
               Turismo Sports
             </span>

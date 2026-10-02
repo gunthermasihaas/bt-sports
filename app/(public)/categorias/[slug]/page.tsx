@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import BreadcrumbJsonLd from "@/app/seo/BreadcrumbJsonLd";
 import CategoryJsonLd from "@/app/seo/CategoryJsonLd";
 import PacotesPorCategoria from "@/components/home/categorias/PacotesPorCategoria";
+import { TipoFoto } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
 type Props = {
@@ -11,6 +12,18 @@ type Props = {
     slug: string;
   }>;
 };
+
+async function getCategoriaMetadata(slug: string) {
+  return prisma.categoriaViagem.findUnique({
+    where: {
+      slug,
+    },
+    select: {
+      nome: true,
+      slug: true,
+    },
+  });
+}
 
 async function getCategoria(slug: string) {
   return prisma.categoriaViagem.findUnique({
@@ -28,8 +41,22 @@ async function getCategoria(slug: string) {
           data_inicio: "asc",
         },
         select: {
+          id: true,
           nome: true,
           slug: true,
+          resumo: true,
+          preco: true,
+          moeda: true,
+          data_inicio: true,
+          fotos: {
+            where: {
+              tipo: TipoFoto.CARD,
+            },
+            take: 1,
+            select: {
+              url: true,
+            },
+          },
         },
       },
     },
@@ -39,7 +66,7 @@ async function getCategoria(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
 
-  const categoria = await getCategoria(slug);
+  const categoria = await getCategoriaMetadata(slug);
 
   if (!categoria) {
     return {
@@ -121,7 +148,10 @@ export default async function CategoriaPage({ params }: Props) {
       />
 
       <main className="min-h-screen bg-background">
-        <PacotesPorCategoria slug={slug} />
+        <PacotesPorCategoria
+          nome={categoria.nome}
+          pacotes={categoria.pacotes}
+        />
       </main>
     </>
   );

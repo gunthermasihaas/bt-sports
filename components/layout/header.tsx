@@ -1,21 +1,15 @@
-"use client";
-
-import { useSession } from "next-auth/react";
-
 import HeaderAdmin from "./header-admin";
 import HeaderPublic from "./header-public";
 
-export default function Header() {
-  const { data: session, status } = useSession();
+export type HeaderRole = "ADMIN" | "EDITOR" | null;
 
-  if (status === "loading") {
-    return null;
-  }
+type Props = {
+  role: HeaderRole;
+};
 
-  const role = session?.user?.role;
-
+export default function Header({ role }: Props) {
   if (role === "ADMIN" || role === "EDITOR") {
-    return <HeaderAdmin />;
+    return <HeaderAdmin role={role} />;
   }
 
   return <HeaderPublic />;

@@ -1,33 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 
+import type { HeaderRole } from "./header";
+import { DesktopNav } from "../header/DesktopNav";
 import { HeaderShell } from "../header/HeaderShell";
 import { MobileMenu } from "../header/MobileMenu";
-import { DesktopNav } from "../header/DesktopNav";
 
-export default function HeaderAdmin() {
-  const { data: session, status } = useSession();
+type Props = {
+  role: Exclude<HeaderRole, null>;
+};
 
-  if (status === "loading") {
-    return null;
-  }
-
-  const role = session?.user?.role;
-
+export default function HeaderAdmin({ role }: Props) {
   const isAdmin = role === "ADMIN";
-  const isEditor = role === "EDITOR";
 
-  if (!isAdmin && !isEditor) {
-    return null;
-  }
-
-  const logout = () => {
+  function logout() {
     void signOut({
       callbackUrl: "/admin/login",
     });
-  };
+  }
 
   const siteLinks = [
     {
