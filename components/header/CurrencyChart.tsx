@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 type DailyItem = {
   bid: string;
@@ -13,154 +13,266 @@ type Props = {
   label: string;
 };
 
+function formatDate(timestamp: string) {
+  const date = new Date(Number(timestamp) * 1000);
+
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+  });
+}
+
+function formatFullDate(timestamp: string) {
+  const date = new Date(Number(timestamp) * 1000);
+
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatValue(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
 export default function CurrencyChart({ data, color, label }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
-  if (!data || data.length === 0) {
-    return null;
+  const chartData = useMemo(() => {
+    return [...data]
+      .filter((item) => Number.isFinite(Number(item.bid)))
+      .reverse();
+  }, [data]);
+
+  if (chartData.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-default bg-surface text-sm text-muted">
+        Histórico indisponível.
+      </div>
+    );
   }
 
-  const width = 700;
+  const values = chartData.map((item) => Number(item.bid));
+
+  const width = 760;
   const height = 300;
-  const padding = 50;
 
-  const chartData = [...data].reverse();
-  const values = chartData.map((d) => Number(d.bid));
+  const padding = {
+    top: 30,
+    right: 28,
+    bottom: 48,
+    left: 64,
+  };
 
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
 
-  function scaleY(value: number) {
-    return height - padding - ((value - min) / range) * (height - padding * 2);
-  }
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+
+  const rawRange = maxValue - minValue;
+
+  const range = rawRange === 0 ? Math.max(maxValue * 0.02, 0.01) : rawRange;
+
+  const chartMin = minValue - range * 0.12;
+  const chartMax = maxValue + range * 0.12;
+  const chartRange = chartMax - chartMin;
 
   function scaleX(index: number) {
-    return padding + (index / (chartData.length - 1)) * (width - padding * 2);
+    if (chartData.length === 1) {
+      return padding.left + chartWidth / 2;
+    }
+
+    return padding.left + (index / (chartData.length - 1)) * chartWidth;
   }
 
-  const path = values
-    .map((v, i) => {
-      const x = scaleX(i);
-      const y = scaleY(v);
-      return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+  function scaleY(value: number) {
+    return padding.top + ((chartMax - value) / chartRange) * chartHeight;
+  }
+
+  const points = values.map((value, index) => ({
+    x: scaleX(index),
+    y: scaleY(value),
+    value,
+  }));
+
+  const linePath = points
+    .map((point, index) => {
+      return `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`;
     })
     .join(" ");
 
-  function formatDate(ts: string) {
-    const date = new Date(Number(ts) * 1000);
-    return date.toLocaleDateString("pt-BR");
-  }
+  const areaPath = [
+    `M ${points[0].x} ${height - padding.bottom}`,
+    ...points.map((point) => `L ${point.x} ${point.y}`),
+    `L ${points[points.length - 1].x} ${height - padding.bottom}`,
+    "Z",
+  ].join(" ");
 
-  const yTicks = 5;
-  const xTicks = 5;
+  const yTickCount = 4;
+
+  const yTicks = Array.from({ length: yTickCount }, (_, index) => {
+    const ratio = index / (yTickCount - 1);
+    const value = chartMax - ratio * chartRange;
+
+    return {
+      value,
+      y: scaleY(value),
+    };
+  });
+
+  const xTickCount = Math.min(5, chartData.length);
+
+  const xTicks = Array.from({ length: xTickCount }, (_, index) => {
+    const chartIndex =
+      xTickCount === 1
+        ? 0
+        : Math.round((chartData.length - 1) * (index / (xTickCount - 1)));
+
+    return {
+      index: chartIndex,
+      x: scaleX(chartIndex),
+    };
+  });
+
+  const selectedPoint =
+    hoverIndex !== null ? points[hoverIndex] : points[points.length - 1];
+
+  const selectedData =
+    hoverIndex !== null
+      ? chartData[hoverIndex]
+      : chartData[chartData.length - 1];
 
   return (
-    <div className="mt-8">
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-72 bg-surface-soft rounded-lg"
-      >
-        {/* Y grid */}
-        {Array.from({ length: yTicks }).map((_, i) => {
-          const value = min + (range / (yTicks - 1)) * i;
-          const y = scaleY(value);
+    <div className="w-full">
+      <div className="relative w-full overflow-hidden rounded-xl bg-surface">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="block h-auto min-h-56 w-full"
+          role="img"
+          aria-label={`Histórico da cotação ${label} nos últimos 30 dias`}
+        >
+          <defs>
+            <linearGradient
+              id={`currency-area-${label}`}
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop offset="0%" stopColor={color} stopOpacity="0.18" />
 
-          return (
-            <g key={i}>
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {yTicks.map((tick, index) => (
+            <g key={`y-${index}`}>
               <line
-                x1={padding}
-                x2={width - padding}
-                y1={y}
-                y2={y}
-                stroke="#e2e8f0"
+                x1={padding.left}
+                x2={width - padding.right}
+                y1={tick.y}
+                y2={tick.y}
+                stroke="currentColor"
+                strokeOpacity="0.08"
               />
-              <text x={10} y={y + 4} fontSize="11" fill="#64748b">
-                R$ {value.toFixed(2)}
+
+              <text
+                x={padding.left - 10}
+                y={tick.y + 4}
+                textAnchor="end"
+                fontSize="11"
+                fill="currentColor"
+                opacity="0.55"
+              >
+                {tick.value.toFixed(2)}
               </text>
             </g>
-          );
-        })}
+          ))}
 
-        {/* X labels */}
-        {Array.from({ length: xTicks }).map((_, i) => {
-          const index = Math.round((chartData.length - 1) * (i / (xTicks - 1)));
-          const x = scaleX(index);
+          <path d={areaPath} fill={`url(#currency-area-${label})`} />
 
-          return (
-            <text
-              key={i}
-              x={x}
-              y={height - 10}
-              fontSize="11"
-              textAnchor="middle"
-              fill="#64748b"
-            >
-              {formatDate(chartData[index].timestamp)}
-            </text>
-          );
-        })}
-
-        {/* Line */}
-        <path d={path} fill="none" stroke={color} strokeWidth="2" />
-
-        {/* Hit areas */}
-        {values.map((v, i) => (
-          <circle
-            key={i}
-            cx={scaleX(i)}
-            cy={scaleY(v)}
-            r="8"
-            fill="transparent"
-            onMouseEnter={() => setHoverIndex(i)}
-            onMouseLeave={() => setHoverIndex(null)}
+          <path
+            d={linePath}
+            fill="none"
+            stroke={color}
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-        ))}
 
-        {/* Tooltip */}
+          {hoverIndex !== null && (
+            <>
+              <line
+                x1={selectedPoint.x}
+                x2={selectedPoint.x}
+                y1={padding.top}
+                y2={height - padding.bottom}
+                stroke={color}
+                strokeOpacity="0.3"
+                strokeDasharray="4 4"
+              />
+
+              <circle
+                cx={selectedPoint.x}
+                cy={selectedPoint.y}
+                r="7"
+                fill="var(--color-surface)"
+                stroke={color}
+                strokeWidth="3"
+              />
+            </>
+          )}
+
+          {xTicks.map((tick, index) => (
+            <text
+              key={`x-${index}`}
+              x={tick.x}
+              y={height - 16}
+              textAnchor="middle"
+              fontSize="11"
+              fill="currentColor"
+              opacity="0.55"
+            >
+              {formatDate(chartData[tick.index].timestamp)}
+            </text>
+          ))}
+
+          {points.map((point, index) => (
+            <circle
+              key={`hit-${index}`}
+              cx={point.x}
+              cy={point.y}
+              r="14"
+              fill="transparent"
+              className="cursor-crosshair"
+              onMouseEnter={() => setHoverIndex(index)}
+              onMouseLeave={() => setHoverIndex(null)}
+            />
+          ))}
+        </svg>
+
         {hoverIndex !== null && (
-          <>
-            <line
-              x1={scaleX(hoverIndex)}
-              x2={scaleX(hoverIndex)}
-              y1={padding}
-              y2={height - padding}
-              stroke="#94a3b8"
-              strokeDasharray="4"
-            />
+          <div
+            className="pointer-events-none absolute left-1/2 top-4 min-w-36 -translate-x-1/2 rounded-xl border border-default bg-surface/95 px-3 py-2 shadow-lg backdrop-blur-md"
+            role="status"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">
+              {formatFullDate(selectedData.timestamp)}
+            </p>
 
-            <rect
-              x={scaleX(hoverIndex) - 70}
-              y={padding}
-              width="140"
-              height="50"
-              rx="8"
-              fill="white"
-              stroke="#e2e8f0"
-            />
-
-            <text
-              x={scaleX(hoverIndex)}
-              y={padding + 18}
-              textAnchor="middle"
-              fontSize="12"
-              fill="#0f172a"
-            >
-              {formatDate(chartData[hoverIndex].timestamp)}
-            </text>
-
-            <text
-              x={scaleX(hoverIndex)}
-              y={padding + 35}
-              textAnchor="middle"
-              fontSize="12"
-              fill={color}
-            >
-              {label}: R$ {values[hoverIndex].toFixed(2)}
-            </text>
-          </>
+            <p className="mt-1 text-sm font-extrabold" style={{ color }}>
+              {formatValue(selectedPoint.value)}
+            </p>
+          </div>
         )}
-      </svg>
+      </div>
     </div>
   );
 }
