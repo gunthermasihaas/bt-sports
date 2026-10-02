@@ -34,13 +34,22 @@ export default function PacotesOrderMenu({
 
   const itemClass = (active: boolean) => {
     if (active) {
-      return "flex items-center gap-3 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand transition-colors";
+      return "flex min-h-11 items-center gap-3 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-on-brand transition-colors";
     }
 
     return isAdmin
-      ? "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-admin-muted transition-colors hover:bg-brand-soft hover:text-brand-dark"
-      : "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-brand-soft hover:text-brand-dark";
+      ? "flex min-h-11 items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-admin-muted transition-colors hover:bg-brand-soft hover:text-brand-dark"
+      : "flex min-h-11 items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-brand-soft hover:text-brand-dark";
   };
+
+  const currentLabel =
+    order === "nome"
+      ? "Alfabética"
+      : order === "data"
+        ? "Data"
+        : order === "preco-asc"
+          ? "Menor preço"
+          : "Maior preço";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -62,10 +71,15 @@ export default function PacotesOrderMenu({
     };
   }, []);
 
+  function closeMenu() {
+    detailsRef.current?.removeAttribute("open");
+  }
+
   return (
-    <details ref={detailsRef} className="relative shrink-0">
+    <details ref={detailsRef} className="group relative shrink-0">
       <summary
-        className={`details-trigger flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus-ring-brand ${triggerClass}`}
+        aria-label={`Ordenar pacotes. Ordenação atual: ${currentLabel}`}
+        className={`details-trigger flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${triggerClass}`}
       >
         <FontAwesomeIcon
           icon={faSliders}
@@ -73,33 +87,39 @@ export default function PacotesOrderMenu({
           className="h-3.5 w-3.5"
         />
 
-        <span>Ordenar</span>
+        <span className="hidden sm:inline">Ordenar</span>
+
+        <span className="sm:hidden">{currentLabel}</span>
 
         <svg
           aria-hidden="true"
           viewBox="0 0 20 20"
-          className="h-4 w-4 opacity-60"
+          className="h-4 w-4 opacity-60 transition-transform duration-200 group-open:rotate-180"
           fill="currentColor"
         >
           <path
             fillRule="evenodd"
-            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.51a.75.75 0 01-1.08 0l-4.25-4.51a.75.75 0 01.02-1.06z"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25-4.51a.75.75 0 01.02-1.06z"
             clipRule="evenodd"
           />
         </svg>
       </summary>
 
-      <div className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-2xl border border-default bg-surface p-2 shadow-[var(--shadow-elevated)]">
-        <div className="px-3 pb-2 pt-1">
+      <div className="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-2xl border border-default bg-surface p-2 shadow-[var(--shadow-elevated)]">
+        <div className="border-b border-default px-3 pb-3 pt-2">
           <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
             Ordenação
           </span>
+
+          <p className="mt-1 text-xs text-muted">Atual: {currentLabel}</p>
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1 pt-2">
           <Link
             href={`${basePath}?order=nome`}
+            onClick={closeMenu}
             className={itemClass(order === "nome")}
+            aria-current={order === "nome" ? "page" : undefined}
           >
             <FontAwesomeIcon
               icon={faArrowUpAZ}
@@ -108,11 +128,19 @@ export default function PacotesOrderMenu({
             />
 
             <span>Alfabética</span>
+
+            {order === "nome" && (
+              <span aria-hidden="true" className="ml-auto text-xs">
+                ✓
+              </span>
+            )}
           </Link>
 
           <Link
             href={`${basePath}?order=data`}
+            onClick={closeMenu}
             className={itemClass(order === "data")}
+            aria-current={order === "data" ? "page" : undefined}
           >
             <FontAwesomeIcon
               icon={faCalendarDays}
@@ -121,11 +149,19 @@ export default function PacotesOrderMenu({
             />
 
             <span>Data</span>
+
+            {order === "data" && (
+              <span aria-hidden="true" className="ml-auto text-xs">
+                ✓
+              </span>
+            )}
           </Link>
 
           <Link
             href={`${basePath}?order=preco-asc`}
+            onClick={closeMenu}
             className={itemClass(order === "preco-asc")}
+            aria-current={order === "preco-asc" ? "page" : undefined}
           >
             <FontAwesomeIcon
               icon={faArrowUpWideShort}
@@ -134,11 +170,19 @@ export default function PacotesOrderMenu({
             />
 
             <span>Menor preço</span>
+
+            {order === "preco-asc" && (
+              <span aria-hidden="true" className="ml-auto text-xs">
+                ✓
+              </span>
+            )}
           </Link>
 
           <Link
             href={`${basePath}?order=preco-desc`}
+            onClick={closeMenu}
             className={itemClass(order === "preco-desc")}
+            aria-current={order === "preco-desc" ? "page" : undefined}
           >
             <FontAwesomeIcon
               icon={faArrowDownWideShort}
@@ -147,6 +191,12 @@ export default function PacotesOrderMenu({
             />
 
             <span>Maior preço</span>
+
+            {order === "preco-desc" && (
+              <span aria-hidden="true" className="ml-auto text-xs">
+                ✓
+              </span>
+            )}
           </Link>
         </div>
       </div>
