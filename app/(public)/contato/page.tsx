@@ -82,7 +82,7 @@ export default async function ContatoPage({ searchParams }: Props) {
         }}
       />
 
-      <main>
+      <main className="min-h-screen bg-background">
         <ContactForm mensagemInicial={mensagemInicial} />
       </main>
     </>

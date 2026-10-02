@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
+
 import CurrencyButton from "./CurrencyButton";
 
 type CurrentApi = {
@@ -59,6 +60,10 @@ export function HeaderShell({
         fetch("https://economia.awesomeapi.com.br/json/daily/EUR-BRL/30"),
       ]);
 
+      if (!currentRes.ok || !usdHistRes.ok || !eurHistRes.ok) {
+        throw new Error("Falha ao carregar dados de câmbio.");
+      }
+
       const currentData = await currentRes.json();
       const usdHist = await usdHistRes.json();
       const eurHist = await eurHistRes.json();
@@ -90,28 +95,49 @@ export function HeaderShell({
 
   return (
     <>
-      <header className={`${bgClass} border-b ${borderClass}`}>
-        <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+      <header
+        className={`sticky top-0 z-50 border-b backdrop-blur-xl ${bgClass} ${borderClass}`}
+      >
+        <nav className="site-container flex h-18 items-center justify-between">
           {logo}
 
-          <div className="hidden items-center gap-x-6 lg:flex">
+          <div className="hidden items-center gap-7 lg:flex">
             {children}
 
+            <span className="h-5 w-px bg-[var(--color-border)]" />
+
             <button
+              type="button"
               onClick={() => setCurrencyOpen(true)}
-              className="rounded-lg px-3 py-2 text-sm font-semibold text-muted text-brand-hover transition hover-brand-soft focus-ring-brand"
+              className="rounded-full border border-default bg-surface px-4 py-2 text-xs font-bold text-muted transition hover:border-brand hover:text-brand-dark"
             >
-              Câmbio
+              EUR / BRL
             </button>
+
+            <a href="/contato" className="button-primary min-h-10 px-5">
+              Fale conosco
+            </a>
           </div>
 
-          <button
-            onClick={() => setMenuOpen(true)}
-            aria-label="Abrir menu"
-            className="text-muted lg:hidden"
-          >
-            ☰
-          </button>
+          <div className="flex items-center gap-2 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setCurrencyOpen(true)}
+              aria-label="Consultar câmbio"
+              className="rounded-full border border-default px-3 py-2 text-xs font-bold text-muted"
+            >
+              EUR
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Abrir menu"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft text-lg font-bold text-brand-dark transition hover:bg-brand hover:text-on-brand"
+            >
+              ☰
+            </button>
+          </div>
         </nav>
 
         <Dialog
@@ -119,32 +145,49 @@ export function HeaderShell({
           onClose={setMenuOpen}
           className="fixed inset-0 z-50 lg:hidden"
         >
-          <div className="fixed inset-0 bg-black/30" />
+          <div className="fixed inset-0 bg-[rgb(4_15_10_/_0.45)] backdrop-blur-sm" />
 
-          <DialogPanel
-            className={`fixed inset-y-0 right-0 w-full p-6 sm:max-w-sm ${bgClass}`}
-          >
+          <DialogPanel className="fixed inset-y-0 right-0 w-full overflow-y-auto bg-surface p-6 shadow-2xl sm:max-w-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-extrabold tracking-tight">
+                MENU
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Fechar menu"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-lg"
+              >
+                ×
+              </button>
+            </div>
+
             {mobileMenu}
 
-            <div className="mt-6">
+            <div className="mt-8 border-t border-default pt-6">
               <button
+                type="button"
                 onClick={() => {
                   setMenuOpen(false);
                   setCurrencyOpen(true);
                 }}
-                className="text-muted text-brand-hover"
+                className="flex w-full items-center justify-between rounded-xl bg-surface-muted px-4 py-4 text-left font-semibold"
               >
-                Câmbio
+                <span>Cotação de moedas</span>
+                <span className="text-brand-dark">EUR / BRL</span>
               </button>
             </div>
 
-            <button
-              onClick={() => setMenuOpen(false)}
-              aria-label="Fechar menu"
-              className="absolute right-6 top-6"
-            >
-              ✕
-            </button>
+            <div className="mt-8">
+              <a
+                href="/contato"
+                onClick={() => setMenuOpen(false)}
+                className="button-primary w-full"
+              >
+                Fale conosco
+              </a>
+            </div>
           </DialogPanel>
         </Dialog>
 

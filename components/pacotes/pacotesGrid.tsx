@@ -15,16 +15,24 @@ type Props = {
 };
 
 export default function PacotesGrid({ pacotes }: Props) {
+  if (!pacotes.length) {
+    return (
+      <div className="surface-card flex min-h-64 items-center justify-center p-8 text-center">
+        <div>
+          <p className="text-lg font-bold text-default">
+            Nenhum pacote encontrado.
+          </p>
+
+          <p className="mt-2 text-sm text-muted">
+            Novas experiências serão adicionadas em breve.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className="
-        grid gap-6
-        grid-cols-1
-        sm:grid-cols-2
-        lg:grid-cols-3
-        2xl:grid-cols-4
-      "
-    >
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {pacotes.map((pacote) => (
         <PacoteCard
           key={pacote.id}

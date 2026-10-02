@@ -120,7 +120,7 @@ export default async function CategoriaPage({ params }: Props) {
         }))}
       />
 
-      <main className="px-6 py-10">
+      <main className="min-h-screen bg-background">
         <PacotesPorCategoria slug={slug} />
       </main>
     </>

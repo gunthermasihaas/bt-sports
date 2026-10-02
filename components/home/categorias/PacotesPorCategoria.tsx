@@ -34,35 +34,69 @@ export default async function PacotesPorCategoria({ slug }: Props) {
   });
 
   if (!categoria) {
-    return <div className="p-10">Categoria não encontrada</div>;
-  }
-
-  if (!categoria.pacotes.length) {
     return (
-      <div className="rounded-lg border border-default bg-surface p-6 text-muted">
-        Nenhum pacote disponível nesta categoria.
+      <div className="site-container py-20 sm:py-24">
+        <div className="surface-card mx-auto max-w-2xl p-8 text-center sm:p-12">
+          <span className="section-kicker">404</span>
+
+          <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-default">
+            Categoria não encontrada
+          </h1>
+
+          <p className="mt-3 text-sm leading-6 text-muted">
+            A categoria que você procura não está disponível.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <>
-      <h1 className="mb-8 text-2xl font-bold">{categoria.nome}</h1>
+    <section className="bg-background py-14 sm:py-18 lg:py-24">
+      <div className="site-container">
+        <header className="mb-10 max-w-3xl sm:mb-12">
+          <span className="section-kicker">Categoria</span>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {categoria.pacotes.map((pacote) => (
-          <PacoteCard
-            key={pacote.id}
-            nome={pacote.nome}
-            resumo={pacote.resumo ?? undefined}
-            preco={pacote.preco !== null ? Number(pacote.preco) : undefined}
-            moeda={pacote.moeda}
-            imageUrl={pacote.fotos[0]?.url}
-            dataEvento={formatarDataCurta(pacote.data_inicio)}
-            href={`/pacotes/${pacote.slug}`}
-          />
-        ))}
+          <h1 className="section-title mt-5">{categoria.nome}</h1>
+
+          <p className="mt-4 text-base leading-7 text-muted sm:text-lg">
+            {categoria.pacotes.length === 1
+              ? "Uma experiência disponível nesta categoria."
+              : `${categoria.pacotes.length} experiências disponíveis nesta categoria.`}
+          </p>
+        </header>
+
+        {!categoria.pacotes.length ? (
+          <div className="surface-card flex min-h-64 items-center justify-center p-8 text-center">
+            <div>
+              <span className="section-kicker">Em breve</span>
+
+              <h2 className="mt-4 text-xl font-bold text-default">
+                Nenhum pacote disponível nesta categoria.
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Estamos preparando novas experiências.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {categoria.pacotes.map((pacote) => (
+              <PacoteCard
+                key={pacote.id}
+                nome={pacote.nome}
+                resumo={pacote.resumo ?? undefined}
+                preco={pacote.preco !== null ? Number(pacote.preco) : undefined}
+                moeda={pacote.moeda}
+                imageUrl={pacote.fotos[0]?.url}
+                dataEvento={formatarDataCurta(pacote.data_inicio)}
+                href={`/pacotes/${pacote.slug}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
-    </>
+    </section>
   );
 }

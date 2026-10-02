@@ -144,96 +144,151 @@ export default function ContactForm({
   }
 
   return (
-    <section className="relative isolate bg-surface-muted px-6 py-24 sm:py-32 lg:px-8">
-      <div className="mx-auto max-w-2xl text-center">
-        <h1 className="text-4xl font-semibold tracking-tight text-color-text sm:text-5xl">
-          Fale com <span className="text-brand">a Biarritz Turismo Sports</span>
-        </h1>
+    <section className="relative overflow-hidden py-14 sm:py-20 lg:py-24">
+      <div className="absolute inset-x-0 top-0 h-96 bg-[radial-gradient(circle_at_50%_0%,rgb(97_198_129_/_0.15),transparent_65%)]" />
 
-        <p className="mt-4 text-lg text-muted">
-          Preencha o formulário abaixo e nossa equipe entrará em contato.
-        </p>
-      </div>
+      <div className="site-container relative z-10">
+        <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div className="lg:pt-6">
+            <span className="section-kicker">Contato</span>
 
-      <form
-        onSubmit={handleSubmit}
-        className="mx-auto mt-16 max-w-xl space-y-6"
-      >
-        <FormInput name="nome" label="Nome completo" required />
+            <h1 className="mt-5 max-w-xl text-5xl font-extrabold tracking-[-0.055em] leading-[0.95] text-default sm:text-6xl">
+              Vamos planejar sua próxima experiência.
+            </h1>
 
-        <FormInput
-          name="email"
-          type="email"
-          label="E-mail"
-          required
-          onBlur={(e) => validarEmail(e.target.value)}
-          error={emailErro}
-        />
+            <p className="mt-6 max-w-lg text-base leading-7 text-muted sm:text-lg sm:leading-8">
+              Preencha o formulário e nossa equipe entrará em contato para
+              entender o que você procura e apresentar as opções disponíveis.
+            </p>
 
-        <FormInput
-          name="telefone"
-          type="tel"
-          label="Telefone"
-          placeholder="+55 11 99999-9999"
-        />
+            <div className="mt-10 rounded-2xl bg-brand-deep p-6 text-white sm:p-8">
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand">
+                Biarritz Turismo Sports
+              </span>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <EstadoSelect
-            estados={estados}
-            value={estado}
-            onChange={(novoEstado) => {
-              setEstado(novoEstado);
-              setCidade("");
-              setCidades([]);
-              setBusca("");
-            }}
-          />
+              <p className="mt-4 text-lg font-bold leading-7">
+                Grandes eventos começam muito antes do dia da competição.
+              </p>
 
-          <CidadeSelect
-            estado={estado}
-            cidade={cidade}
-            setCidade={setCidade}
-            cidades={filtradas}
-            busca={busca}
-            setBusca={setBusca}
-          />
+              <p className="mt-3 text-sm leading-6 text-white/55">
+                Conte para nós qual experiência você está procurando.
+              </p>
+            </div>
+          </div>
+
+          <div className="surface-card p-6 sm:p-8 lg:p-10">
+            <div className="mb-8">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+                Solicite informações
+              </span>
+
+              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-default">
+                Fale com nossa equipe
+              </h2>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <FormInput name="nome" label="Nome completo" required />
+
+              <FormInput
+                name="email"
+                type="email"
+                label="E-mail"
+                required
+                onBlur={(e) => validarEmail(e.target.value)}
+                error={emailErro}
+              />
+
+              <FormInput
+                name="telefone"
+                type="tel"
+                label="Telefone"
+                placeholder="+55 11 99999-9999"
+              />
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <EstadoSelect
+                  estados={estados}
+                  value={estado}
+                  onChange={(novoEstado) => {
+                    setEstado(novoEstado);
+                    setCidade("");
+                    setCidades([]);
+                    setBusca("");
+                  }}
+                />
+
+                <CidadeSelect
+                  estado={estado}
+                  cidade={cidade}
+                  setCidade={setCidade}
+                  cidades={filtradas}
+                  busca={busca}
+                  setBusca={setBusca}
+                />
+              </div>
+
+              <FormTextarea
+                name="mensagem"
+                label="Mensagem"
+                rows={6}
+                required
+                defaultValue={mensagemInicial}
+              />
+
+              {sucesso && (
+                <div
+                  role="status"
+                  className="rounded-xl border border-green-200 bg-green-50 px-4 py-4 text-sm font-semibold text-green-700"
+                >
+                  Mensagem enviada com sucesso. Nossa equipe entrará em contato.
+                </div>
+              )}
+
+              {erroEnvio && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm font-semibold text-red-700"
+                >
+                  {erroEnvio}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || !!emailErro}
+                className={`inline-flex min-h-13 w-full items-center justify-center rounded-full px-6 text-sm font-bold transition ${
+                  loading || emailErro
+                    ? "cursor-not-allowed bg-brand-soft text-muted"
+                    : "bg-brand text-on-brand shadow-sm hover:bg-brand-dark hover:shadow-md focus-ring-brand"
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                    />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    Enviar mensagem
+                    <span className="ml-2" aria-hidden="true">
+                      →
+                    </span>
+                  </>
+                )}
+              </button>
+
+              <p className="text-center text-xs leading-5 text-muted">
+                Ao enviar, seus dados serão utilizados para responder à sua
+                solicitação de contato.
+              </p>
+            </form>
+          </div>
         </div>
-
-        <FormTextarea
-          name="mensagem"
-          label="Mensagem"
-          rows={4}
-          required
-          defaultValue={mensagemInicial}
-        />
-
-        {sucesso && (
-          <p role="status" className="text-center text-sm text-green-600">
-            Mensagem enviada com sucesso!
-          </p>
-        )}
-
-        {erroEnvio && (
-          <p role="alert" className="text-center text-sm text-danger">
-            {erroEnvio}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading || !!emailErro}
-          className={`
-            w-full rounded-md px-4 py-3 text-sm font-semibold
-            ${
-              loading || emailErro
-                ? "cursor-not-allowed bg-brand-soft text-muted"
-                : "bg-brand text-on-brand bg-brand-dark-hover focus-ring-brand"
-            }
-          `}
-        >
-          {loading ? "Enviando..." : "Enviar mensagem"}
-        </button>
-      </form>
+      </div>
     </section>
   );
 }

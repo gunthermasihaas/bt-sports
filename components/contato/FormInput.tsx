@@ -1,4 +1,5 @@
 import { InputHTMLAttributes } from "react";
+
 import { FormField } from "./FormField";
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
@@ -11,12 +12,12 @@ export function FormInput({ label, error, ...props }: Props) {
     <FormField label={label} required={props.required} error={error}>
       <input
         {...props}
-        className="
-          mt-2 w-full rounded-md
-          bg-surface px-3.5 py-2
-          border border-default
-          focus-ring-brand
-        "
+        aria-invalid={Boolean(error)}
+        className={`min-h-12 w-full rounded-xl border bg-surface px-4 text-sm text-default shadow-sm outline-none transition placeholder:text-muted/60 focus-ring-brand ${
+          error
+            ? "border-red-300 focus:border-red-400"
+            : "border-default hover:border-border-muted focus:border-brand"
+        }`}
       />
     </FormField>
   );

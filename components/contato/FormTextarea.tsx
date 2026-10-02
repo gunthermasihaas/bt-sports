@@ -1,4 +1,5 @@
 import { TextareaHTMLAttributes } from "react";
+
 import { FormField } from "./FormField";
 
 type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & {
@@ -10,12 +11,7 @@ export function FormTextarea({ label, ...props }: Props) {
     <FormField label={label} required={props.required}>
       <textarea
         {...props}
-        className="
-          mt-2 w-full rounded-md
-          bg-surface px-3.5 py-2
-          border border-default
-          focus-ring-brand
-        "
+        className="min-h-36 w-full resize-y rounded-xl border border-default bg-surface px-4 py-3 text-sm leading-6 text-default shadow-sm outline-none transition placeholder:text-muted/60 hover:border-border-muted focus:border-brand focus-ring-brand"
       />
     </FormField>
   );

@@ -101,142 +101,110 @@ export default function PacoteView({
   const altCapa = categoria?.nome ? `${nome} — ${categoria.nome}` : nome;
 
   return (
-    <div className="bg-surface px-4 py-8 sm:px-6 sm:py-10">
-      <div className="mx-auto max-w-5xl space-y-10">
-        <section className="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
-          <div className="relative aspect-4/3 overflow-hidden rounded-xl bg-surface-muted">
-            {capaUrl ? (
-              <Image
-                src={capaUrl}
-                alt={altCapa}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover"
-                priority
-              />
-            ) : (
-              <div
-                role="img"
-                aria-label={`Imagem de capa não disponível para ${nome}`}
-                className="flex h-full items-center justify-center text-sm text-muted"
-              >
-                Sem imagem de capa
-              </div>
-            )}
-          </div>
+    <main className="bg-background">
+      <section className="relative isolate overflow-hidden bg-brand-deep">
+        <div className="relative min-h-[520px] sm:min-h-[620px]">
+          {capaUrl ? (
+            <Image
+              src={capaUrl}
+              alt={altCapa}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority
+            />
+          ) : (
+            <div className="flex h-full min-h-[520px] items-center justify-center bg-brand-deep text-sm text-white/60">
+              Sem imagem de capa
+            </div>
+          )}
 
-          <div className="flex min-w-0 flex-col gap-6">
-            {categoria && (
-              <span className="inline-block max-w-full truncate rounded-md bg-brand/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand">
-                {categoria.nome}
-              </span>
-            )}
+          <div className="hero-overlay absolute inset-0" />
 
-            <h1 className="wrap-break-word text-3xl font-bold leading-tight tracking-tight text-on-surface">
-              {nome}
-            </h1>
-
-            {data_inicio && (
-              <p className="text-sm font-medium text-on-surface-muted">
-                {formatarDataLonga(data_inicio)}
-              </p>
-            )}
-
-            {texto_destaque && (
-              <p className="wrap-break-word text-lg font-medium text-brand">
-                {texto_destaque}
-              </p>
-            )}
-
-            {resumo && (
-              <p className="wrap-break-word text-sm leading-relaxed text-on-surface-muted">
-                {resumo}
-              </p>
-            )}
-
-            <div className="rounded-xl border border-border-muted bg-surface-muted p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs uppercase tracking-wide text-on-surface-muted">
-                    A partir de
-                  </p>
-
-                  <p className="wrap-break-word text-2xl font-bold leading-tight text-on-surface sm:text-3xl">
-                    {preco !== undefined
-                      ? formatarPreco(preco, moeda)
-                      : "Sob consulta"}
-                  </p>
-                </div>
-
-                <div className="shrink-0">
+          <div className="relative z-10 flex min-h-[520px] items-end sm:min-h-[620px]">
+            <div className="site-container w-full pb-10 sm:pb-14 lg:pb-16">
+              <div className="max-w-4xl">
+                {categoria && (
                   <Link
-                    href={contatoUrl}
-                    className="
-                      inline-flex
-                      w-full
-                      min-w-45
-                      items-center
-                      justify-center
-                      rounded-lg
-                      bg-brand
-                      px-6
-                      py-3
-                      text-sm
-                      font-semibold
-                      text-on-brand
-                      transition
-                      hover:bg-brand-hover
-                      focus:outline-none
-                      focus:ring-2
-                      focus:ring-brand/40
-                      sm:w-auto
-                      whitespace-nowrap
-                    "
+                    href={`/categorias/${categoria.slug}`}
+                    className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white backdrop-blur-md transition hover:bg-white/15"
                   >
-                    Solicitar informações
+                    {categoria.nome}
                   </Link>
+                )}
+
+                <h1 className="mt-5 text-4xl font-extrabold tracking-[-0.045em] leading-[0.95] text-white sm:text-5xl lg:text-7xl">
+                  {nome}
+                </h1>
+
+                <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-white/70">
+                  {data_inicio && <span>{formatarDataLonga(data_inicio)}</span>}
+
+                  {texto_destaque && (
+                    <span className="text-brand">{texto_destaque}</span>
+                  )}
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="relative z-10 -mt-8 pb-8 sm:-mt-12 sm:pb-12">
+        <div className="site-container">
+          <div className="surface-card grid gap-8 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center lg:p-10">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
+                A partir de
+              </span>
+
+              <div className="mt-2 text-3xl font-extrabold tracking-tight text-default sm:text-4xl">
+                {preco !== undefined
+                  ? formatarPreco(preco, moeda)
+                  : "Sob consulta"}
+              </div>
+
+              {resumo && (
+                <p className="mt-4 max-w-3xl text-sm leading-6 text-muted sm:text-base">
+                  {resumo}
+                </p>
+              )}
+            </div>
+
+            <Link
+              href={contatoUrl}
+              className="button-primary min-h-13 w-full px-7 sm:w-auto"
+            >
+              Solicitar informações
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {descricaoSanitizada && (
+        <section className="pb-20 sm:pb-24 lg:pb-28">
+          <div className="site-container">
+            <div className="grid gap-10 lg:grid-cols-[0.3fr_0.7fr] lg:gap-20">
+              <div>
+                <span className="section-kicker">A experiência</span>
+
+                <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-default sm:text-3xl">
+                  Sobre o pacote
+                </h2>
+              </div>
+
+              <div className="prose-biarritz max-w-none">
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: descricaoSanitizada,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </section>
-
-        {descricaoSanitizada && (
-          <section
-            className="
-              prose prose-neutral
-              max-w-none
-              wrap-break-word
-
-              [&_a]:font-medium
-              [&_a]:text-brand
-              [&_a]:underline
-              [&_a]:underline-offset-2
-              [&_a]:decoration-2
-              [&_a]:decoration-brand/70
-              [&_a]:transition
-
-              [&_a:hover]:text-brand-dark
-              [&_a:hover]:decoration-brand-dark
-
-              [&_img]:h-auto
-              [&_img]:max-w-full
-
-              [&_table]:block
-              [&_table]:w-full
-              [&_table]:overflow-x-auto
-            "
-          >
-            <h2>Sobre o pacote</h2>
-
-            <div
-              dangerouslySetInnerHTML={{
-                __html: descricaoSanitizada,
-              }}
-            />
-          </section>
-        )}
-      </div>
-    </div>
+      )}
+    </main>
   );
 }

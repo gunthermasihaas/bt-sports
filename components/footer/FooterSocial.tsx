@@ -1,6 +1,7 @@
 "use client";
 
 import Script from "next/script";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebookF, faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
@@ -16,12 +17,18 @@ declare global {
 
 export function FooterSocial() {
   return (
-    <div className="lg:pl-8 xl:pl-16">
-      <h2 className="text-center sm:text-left text-2xl sm:text-3xl font-bold tracking-tight">
-        Nos acompanhe
-      </h2>
+    <div className="lg:min-w-80">
+      <div>
+        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+          Conecte-se
+        </span>
 
-      <div className="mt-6 mb-10 flex justify-center sm:block">
+        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-white">
+          Nos acompanhe
+        </h2>
+      </div>
+
+      <div className="mt-6 overflow-hidden rounded-2xl bg-white/5">
         <blockquote
           className="instagram-media"
           data-instgrm-permalink="https://www.instagram.com/biarritzsports/"
@@ -29,42 +36,46 @@ export function FooterSocial() {
           style={{
             width: "100%",
             maxWidth: 360,
-            borderRadius: 12,
+            margin: "0 auto",
+            borderRadius: 16,
           }}
         />
       </div>
 
-      <ul className="space-y-4 text-sm sm:text-base text-muted">
-        <li className="flex items-center justify-center sm:justify-start gap-3 text-brand text-brand-dark-hover">
-          <FontAwesomeIcon icon={faFacebookF} className="w-4 h-4" />
+      <div className="mt-6 flex flex-col gap-3 text-sm text-white/65">
+        <a
+          href="https://www.facebook.com/biarritzsports/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 transition hover:text-white"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
+            <FontAwesomeIcon icon={faFacebookF} className="h-4 w-4" />
+          </span>
 
-          <a
-            href="https://www.facebook.com/biarritzsports/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-brand-dark transition-colors"
-          >
-            /biarritzturismosports
-          </a>
-        </li>
+          <span>/biarritzturismosports</span>
+        </a>
 
-        <li className="flex items-center justify-center sm:justify-start gap-3 text-brand text-brand-dark-hover">
-          <FontAwesomeIcon icon={faWhatsapp} className="w-4 h-4" />
+        <a
+          href="https://api.whatsapp.com/send?phone=5551981442091"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 transition hover:text-white"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
+            <FontAwesomeIcon icon={faWhatsapp} className="h-4 w-4" />
+          </span>
 
-          <a
-            href="https://api.whatsapp.com/send?phone=5551981442091"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-brand-dark transition-colors"
-          >
-            51 98144-2091
-          </a>
-        </li>
-      </ul>
+          <span>51 98144-2091</span>
+        </a>
+      </div>
 
-      <p className="mt-8 text-center sm:text-left text-xl sm:text-2xl font-bold text-brand-dark">
+      <a
+        href="tel:+555130262233"
+        className="mt-6 block text-2xl font-extrabold tracking-tight text-brand transition hover:text-white"
+      >
         (51) 3026.2233
-      </p>
+      </a>
 
       <Script
         src="https://www.instagram.com/embed.js"

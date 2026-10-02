@@ -1,8 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { formatarPreco } from "@/types/moedas";
-import type { Moeda } from "@/types/moedas";
+import { formatarPreco, type Moeda } from "@/types/moedas";
 
 type PacoteCardProps = {
   nome: string;
@@ -29,82 +28,82 @@ export default function PacoteCard({
 }: PacoteCardProps) {
   const isAdmin = variant === "admin";
 
-  const Content = (
+  const content = (
     <>
-      <div className="relative aspect-4/3 w-full bg-surface-muted">
+      <div className="relative aspect-[4/3] overflow-hidden bg-surface-muted">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={nome}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33.33vw"
-            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-700 ease-[var(--ease-emphasized)] group-hover:scale-[1.045]"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-muted">
+          <div className="flex h-full items-center justify-center bg-brand-deep text-sm text-white/70">
             Sem imagem
           </div>
         )}
 
-        <div className="pointer-events-none absolute inset-0 bg-brand-soft/60 opacity-0 transition-opacity sm:group-hover:opacity-100" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[rgb(4_15_10_/_0.72)] via-transparent to-transparent opacity-90" />
 
         {dataEvento && (
-          <span
-            className="
-              absolute left-3 top-3 z-10
-              rounded-full
-              bg-brand
-              px-3 py-1
-              text-[11px]
-              font-semibold
-              uppercase
-              tracking-wide
-              text-on-brand
-              shadow-sm
-            "
-          >
+          <span className="absolute left-4 top-4 z-10 rounded-full bg-white/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-deep backdrop-blur-md">
             {dataEvento}
           </span>
         )}
 
         {badge && (
-          <span className="absolute right-3 top-3 z-10 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-on-brand">
+          <span className="absolute right-4 top-4 z-10 rounded-full bg-brand px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-on-brand shadow-sm">
             {badge}
           </span>
         )}
+
+        <div className="absolute bottom-4 left-4 right-4 z-10 flex items-end justify-between gap-3">
+          <span className="max-w-[80%] text-xl font-extrabold leading-tight tracking-tight text-white">
+            {nome}
+          </span>
+
+          {href && (
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-brand-deep transition-transform duration-300 group-hover:translate-x-1">
+              →
+            </span>
+          )}
+        </div>
       </div>
 
-      <div
-        className={`relative z-10 px-4 py-4 sm:px-5 ${
-          isAdmin ? "bg-surface-muted" : "bg-surface"
-        }`}
-      >
-        <h3 className="text-base font-semibold leading-snug sm:text-lg">
-          {nome}
-        </h3>
-
+      <div className={`p-5 ${isAdmin ? "bg-surface-muted" : "bg-surface"}`}>
         {resumo && (
-          <p className="mt-1 line-clamp-2 text-sm text-muted">{resumo}</p>
+          <p className="line-clamp-2 text-sm leading-6 text-muted">{resumo}</p>
         )}
 
-        {preco !== undefined && preco !== null && (
-          <div className="mt-3 text-base font-bold text-brand sm:text-lg">
-            {formatarPreco(preco, moeda)}
+        <div className="mt-4 flex items-end justify-between gap-4">
+          <div>
+            <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
+              A partir de
+            </span>
+
+            <span className="mt-1 block text-lg font-extrabold tracking-tight text-default">
+              {preco !== undefined
+                ? formatarPreco(preco, moeda)
+                : "Sob consulta"}
+            </span>
           </div>
-        )}
+
+          {href && (
+            <span className="text-xs font-bold text-brand-dark transition-colors group-hover:text-brand-deep">
+              Ver pacote
+            </span>
+          )}
+        </div>
       </div>
     </>
   );
 
   if (!href) {
     return (
-      <div
-        className="
-          group relative block overflow-hidden rounded-xl
-          border border-default bg-surface
-        "
-      >
-        {Content}
+      <div className="group relative overflow-hidden rounded-2xl border border-default bg-surface shadow-[var(--shadow-card)]">
+        {content}
       </div>
     );
   }
@@ -112,13 +111,9 @@ export default function PacoteCard({
   return (
     <Link
       href={href}
-      className="
-        group relative block overflow-hidden rounded-xl
-        border border-default bg-surface transition
-        sm:hover:-translate-y-0.5 sm:hover:shadow-lg
-      "
+      className="group relative block overflow-hidden rounded-2xl border border-default bg-surface shadow-[var(--shadow-card)] transition-all duration-500 ease-[var(--ease-standard)] hover:-translate-y-1 hover:shadow-[var(--shadow-card-hover)]"
     >
-      {Content}
+      {content}
     </Link>
   );
 }

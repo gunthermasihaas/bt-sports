@@ -11,25 +11,24 @@ type Props = {
 export function EstadoSelect({ estados, value, onChange }: Props) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-color-text">
+      <label htmlFor="estado" className="block text-sm font-bold text-default">
         Estado
       </label>
 
       <select
+        id="estado"
+        name="estado"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="
-          mt-2 w-full rounded-md
-          bg-surface px-3.5 py-2
-          border border-default
-          focus-ring-brand
-        "
+        className="mt-2 min-h-12 w-full rounded-xl border border-default bg-surface px-4 text-sm text-default shadow-sm outline-none transition hover:border-border-muted focus:border-brand focus-ring-brand"
       >
         <option value="">Selecione</option>
+
         <option value="FORA">Fora do Brasil</option>
-        {estados.map((e) => (
-          <option key={e.id} value={e.sigla}>
-            {e.nome}
+
+        {estados.map((estado) => (
+          <option key={estado.id} value={estado.sigla}>
+            {estado.nome}
           </option>
         ))}
       </select>

@@ -63,12 +63,11 @@ export default async function PacotesPublicos({ searchParams }: Props) {
         }))}
       />
 
-      <main className="min-h-screen bg-background px-4 py-10 sm:px-6 sm:py-12">
-        <h1 className="sr-only">Pacotes de Turismo Esportivo</h1>
-
-        <PacotesHeader order={order} />
-
-        <PacotesGrid pacotes={pacotes} />
+      <main className="min-h-screen bg-background py-12 sm:py-16 lg:py-20">
+        <div className="site-container">
+          <PacotesHeader order={order} />
+          <PacotesGrid pacotes={pacotes} />
+        </div>
       </main>
     </>
   );

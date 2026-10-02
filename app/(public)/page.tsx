@@ -8,6 +8,9 @@ import { formatarDataLonga } from "@/lib/formatarData";
 import CategoriasCarousel from "@/components/home/categorias/CategoriasCarousel";
 import PacotesRecentes from "@/components/home/pacotes-recentes/PacotesRecentes";
 import PacoteDestaque from "@/components/home/pacote-destaque/PacoteDestaque";
+import PorqueBiarritz from "@/components/home/PorqueBiarritz";
+import HomeCta from "@/components/home/HomeCta";
+
 import WebsiteJsonLd from "@/app/seo/WebsiteJsonLd";
 
 export const metadata: Metadata = {
@@ -42,12 +45,7 @@ export default async function Home() {
     <>
       <WebsiteJsonLd />
 
-      <main>
-        <h1 className="sr-only">
-          Biarritz Turismo Sports — Turismo Esportivo e Pacotes para Grandes
-          Eventos
-        </h1>
-
+      <main className="bg-background">
         {destaque && (
           <PacoteDestaque
             slug={destaque.slug}
@@ -60,20 +58,60 @@ export default async function Home() {
         )}
 
         <section
-          className="bg-surface-muted px-6 py-12 text-color-text"
+          className="bg-background py-16 sm:py-20 lg:py-24"
           aria-labelledby="experiencias-heading"
         >
-          <h2
-            id="experiencias-heading"
-            className="mb-6 text-center text-xl font-semibold"
-          >
-            <span className="text-brand">Escolha</span> sua próxima experiência
-          </h2>
+          <div className="site-container">
+            <div className="mb-10 max-w-2xl">
+              <span className="section-kicker">Experiências esportivas</span>
 
-          <CategoriasCarousel categorias={categorias} />
+              <h2
+                id="experiencias-heading"
+                className="section-title mt-4 text-default"
+              >
+                Escolha como você quer viver o esporte.
+              </h2>
 
-          <PacotesRecentes pacotes={pacotes} />
+              <p className="mt-4 max-w-xl text-base leading-7 text-muted sm:text-lg">
+                Grandes eventos, destinos especiais e experiências pensadas para
+                quem quer estar dentro da atmosfera do esporte.
+              </p>
+            </div>
+
+            <CategoriasCarousel categorias={categorias} />
+          </div>
         </section>
+
+        <section
+          className="bg-surface py-16 sm:py-20 lg:py-24"
+          aria-labelledby="pacotes-heading"
+        >
+          <div className="site-container">
+            <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-2xl">
+                <span className="section-kicker">Seleção Biarritz</span>
+
+                <h2
+                  id="pacotes-heading"
+                  className="section-title mt-4 text-default"
+                >
+                  Experiências em destaque
+                </h2>
+
+                <p className="mt-4 text-base leading-7 text-muted sm:text-lg">
+                  Pacotes selecionados para você chegar ao evento, aproveitar a
+                  viagem e viver cada momento.
+                </p>
+              </div>
+            </div>
+
+            <PacotesRecentes pacotes={pacotes} />
+          </div>
+        </section>
+
+        <PorqueBiarritz />
+
+        <HomeCta />
       </main>
     </>
   );

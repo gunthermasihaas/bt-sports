@@ -8,14 +8,19 @@ type Props = {
 export function FormField({ label, required, error, children }: Props) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-color-text">
+      <label className="block text-sm font-bold text-default">
         {label}
-        {required && <span className="text-brand"> *</span>}
+
+        {required && (
+          <span aria-hidden="true" className="ml-1 text-brand-dark">
+            *
+          </span>
+        )}
       </label>
 
-      {children}
+      <div className="mt-2">{children}</div>
 
-      {error && <p className="mt-1 text-sm text-danger">{error}</p>}
+      {error && <p className="mt-2 text-sm font-medium text-danger">{error}</p>}
     </div>
   );
 }

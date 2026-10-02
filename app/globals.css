@@ -1,51 +1,94 @@
 @import "tailwindcss";
 
-/* =========================
-Base Design Tokens
-========================= */
+/* =========================================================
+   DESIGN TOKENS
+   ========================================================= */
+
 @layer base {
   :root {
-    /* ================= Backgrounds ================= */
-    --color-bg: #f8fafc;
+    /* Background */
+    --color-bg: #f6f8f6;
     --color-surface: #ffffff;
-    --color-surface-muted: #f1f5f9;
-    --color-surface-soft: #f5f7fa;
+    --color-surface-soft: #eef3ef;
+    --color-surface-muted: #e7eee9;
 
-    /* ================= Brand ================= */
-    --color-brand: #6ac485;
-    --color-brand-dark: #4fa96a;
-    --color-brand-soft: #e8f6ee;
-    --color-brand-accent: #9ee3b5;
+    /* Brand */
+    --color-brand: #61c681;
+    --color-brand-dark: #419d62;
+    --color-brand-deep: #0d291c;
+    --color-brand-soft: #e5f5ea;
+    --color-brand-accent: #a8e2ba;
 
-    /* ================= Text ================= */
-    --color-text: #0f172a;
-    --color-text-muted: #64748b;
+    /* Dark */
+    --color-ink: #0b1720;
+    --color-ink-soft: #26363d;
+
+    /* Text */
+    --color-text: #0b1720;
+    --color-text-muted: #66757d;
     --color-text-on-brand: #ffffff;
 
-    /* ================= Border ================= */
-    --color-border: #e2e8f0;
-    --color-border-muted: #cbd5e1;
-    --color-border-black: #000000;
+    /* Borders */
+    --color-border: #dce5df;
+    --color-border-muted: #cbd8d0;
 
-    /* ================= Status ================= */
+    /* Status */
     --color-success: #22c55e;
     --color-warning: #f59e0b;
     --color-error: #ef4444;
+
+    /* Radius */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.5rem;
+
+    /* Shadows */
+    --shadow-card:
+      0 1px 2px rgb(11 23 32 / 0.04), 0 8px 30px rgb(11 23 32 / 0.06);
+
+    --shadow-card-hover:
+      0 2px 4px rgb(11 23 32 / 0.05), 0 18px 45px rgb(11 23 32 / 0.12);
+
+    --shadow-elevated: 0 20px 60px rgb(11 23 32 / 0.16);
+
+    /* Motion */
+    --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
     background-color: var(--color-bg);
     color: var(--color-text);
-    font-family: Inter, Arial, Helvetica, sans-serif;
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
     @apply antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-brand);
+    color: var(--color-text-on-brand);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-brand-accent);
+    outline-offset: 3px;
   }
 }
 
-/* =========================
-Utilities (Design System)
-========================= */
+/* =========================================================
+   DESIGN SYSTEM UTILITIES
+   ========================================================= */
+
 @layer utilities {
-  /* ================= Backgrounds ================= */
+  .bg-background {
+    background-color: var(--color-bg);
+  }
+
   .bg-surface {
     background-color: var(--color-surface);
   }
@@ -66,11 +109,68 @@ Utilities (Design System)
     background-color: var(--color-brand-dark);
   }
 
+  .bg-brand-deep {
+    background-color: var(--color-brand-deep);
+  }
+
   .bg-brand-soft {
     background-color: var(--color-brand-soft);
   }
 
-  /* Background hover */
+  .text-default,
+  .text-color-text {
+    color: var(--color-text);
+  }
+
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+
+  .text-brand {
+    color: var(--color-brand);
+  }
+
+  .text-brand-dark {
+    color: var(--color-brand-dark);
+  }
+
+  .text-brand-deep {
+    color: var(--color-brand-deep);
+  }
+
+  .text-on-brand {
+    color: var(--color-text-on-brand);
+  }
+
+  .text-on-surface {
+    color: var(--color-text);
+  }
+
+  .text-on-surface-muted {
+    color: var(--color-text-muted);
+  }
+
+  .border-default {
+    border-color: var(--color-border);
+  }
+
+  .border-muted,
+  .border-border-muted {
+    border-color: var(--color-border-muted);
+  }
+
+  .border-brand {
+    border-color: var(--color-brand);
+  }
+
+  .text-brand-hover:hover {
+    color: var(--color-brand-dark);
+  }
+
+  .text-brand-dark-hover:hover {
+    color: var(--color-brand-deep);
+  }
+
   .bg-brand-hover:hover {
     background-color: var(--color-brand);
   }
@@ -91,86 +191,43 @@ Utilities (Design System)
     background-color: var(--color-surface-muted);
   }
 
-  /* ================= Text ================= */
-  .text-brand {
-    color: var(--color-brand);
-  }
-
-  .text-brand-dark {
-    color: var(--color-brand-dark);
-  }
-
-  .text-muted {
-    color: var(--color-text-muted);
-  }
-
-  .text-on-brand {
-    color: var(--color-text-on-brand);
-  }
-
-  /* Text hover */
-  .text-brand-hover:hover {
-    color: var(--color-brand);
-  }
-
-  .text-brand-dark-hover:hover {
-    color: var(--color-brand-dark);
-  }
-
-  .text-muted-hover:hover {
-    color: var(--color-text-muted);
-  }
-
-  .text-default-hover:hover {
-    color: var(--color-text);
-  }
-
-  .text-on-brand-hover:hover {
-    color: var(--color-text-on-brand);
-  }
-
-  /* ================= Borders ================= */
-  .border-default {
-    border-color: var(--color-border);
-  }
-
-  .border-muted {
-    border-color: var(--color-border-muted);
-  }
-
-  .border-brand {
-    border-color: var(--color-brand);
-  }
-
-  /* Border hover */
   .border-brand-hover:hover {
     border-color: var(--color-brand);
   }
 
-  .border-muted-hover:hover {
-    border-color: var(--color-border-muted);
-  }
-
-  /* ================= Focus / Ring ================= */
   .focus-ring-brand:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px var(--color-brand-accent);
   }
 
-  .focus-ring-brand-hover:hover {
-    box-shadow: 0 0 0 3px var(--color-brand-accent);
+  .text-danger {
+    color: var(--color-error);
   }
 
-  /* ================= Opacity / Subtle ================= */
-  .opacity-hover:hover {
-    opacity: 0.85;
+  .text-danger-hover:hover {
+    color: #dc2626;
   }
 
-  .opacity-soft-hover:hover {
-    opacity: 0.7;
+  .bg-admin {
+    background-color: var(--color-surface-muted);
   }
 
-  /* ================= Generic Helpers ================= */
+  .text-admin {
+    color: var(--color-text);
+  }
+
+  .text-admin-muted {
+    color: var(--color-text-muted);
+  }
+
+  .text-admin-hover:hover {
+    color: var(--color-brand-dark);
+  }
+
+  .border-admin {
+    border-color: var(--color-border-muted);
+  }
+
   .hover-surface:hover {
     background-color: var(--color-surface-muted);
   }
@@ -179,7 +236,14 @@ Utilities (Design System)
     background-color: var(--color-brand-soft);
   }
 
-  /* ================= Details / Disclosure ================= */
+  .opacity-hover:hover {
+    opacity: 0.85;
+  }
+
+  .opacity-soft-hover:hover {
+    opacity: 0.7;
+  }
+
   .details-trigger {
     list-style: none;
   }
@@ -194,40 +258,203 @@ Utilities (Design System)
   }
 }
 
-/* =========================
-Admin (Área Restrita)
-========================= */
-@layer utilities {
-  /* Background admin */
-  .bg-admin {
-    background-color: var(--color-surface-muted);
+/* =========================================================
+   COMPONENT STYLES
+   ========================================================= */
+
+@layer components {
+  .site-container {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
   }
 
-  /* Text admin */
-  .text-admin {
-    color: var(--color-text);
-  }
-
-  .text-admin-muted {
-    color: var(--color-text-muted);
-  }
-
-  /* Hover admin */
-  .text-admin-hover:hover {
+  .section-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     color: var(--color-brand-dark);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    text-transform: uppercase;
   }
 
-  /* Separador admin */
-  .border-admin {
-    border-color: var(--color-border-muted);
+  .section-kicker::before {
+    content: "";
+    width: 1.75rem;
+    height: 2px;
+    border-radius: 999px;
+    background-color: var(--color-brand);
   }
 
-  /* Danger (logout, destructive) */
-  .text-danger {
-    color: var(--color-error);
+  .display-title {
+    font-size: clamp(2.5rem, 6vw, 5.5rem);
+    font-weight: 800;
+    letter-spacing: -0.055em;
+    line-height: 0.95;
   }
 
-  .text-danger-hover:hover {
-    color: #dc2626;
+  .section-title {
+    font-size: clamp(1.9rem, 4vw, 3.25rem);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1;
+  }
+
+  .button-primary {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    background-color: var(--color-brand);
+    padding-inline: 1.25rem;
+    color: var(--color-text-on-brand);
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition:
+      transform 250ms var(--ease-standard),
+      background-color 250ms var(--ease-standard),
+      box-shadow 250ms var(--ease-standard);
+  }
+
+  .button-primary:hover {
+    background-color: var(--color-brand-dark);
+    box-shadow: 0 10px 24px rgb(65 157 98 / 0.25);
+    transform: translateY(-1px);
+  }
+
+  .button-secondary {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid rgb(255 255 255 / 0.35);
+    border-radius: 999px;
+    background-color: rgb(255 255 255 / 0.08);
+    padding-inline: 1.25rem;
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 700;
+    backdrop-filter: blur(12px);
+    transition:
+      transform 250ms var(--ease-standard),
+      background-color 250ms var(--ease-standard);
+  }
+
+  .button-secondary:hover {
+    background-color: rgb(255 255 255 / 0.16);
+    transform: translateY(-1px);
+  }
+
+  .surface-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  .hero-overlay {
+    background:
+      linear-gradient(
+        90deg,
+        rgb(4 15 10 / 0.88) 0%,
+        rgb(4 15 10 / 0.64) 38%,
+        rgb(4 15 10 / 0.22) 72%,
+        rgb(4 15 10 / 0.08) 100%
+      ),
+      linear-gradient(0deg, rgb(4 15 10 / 0.6) 0%, transparent 45%);
+  }
+
+  .category-art {
+    background:
+      radial-gradient(
+        circle at 80% 20%,
+        rgb(255 255 255 / 0.18),
+        transparent 28%
+      ),
+      linear-gradient(135deg, var(--color-brand-deep), var(--color-brand-dark));
+  }
+
+  .category-art::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      transparent 0 48%,
+      rgb(255 255 255 / 0.06) 48% 50%,
+      transparent 50%
+    );
+    background-size: 2.5rem 2.5rem;
+    opacity: 0.7;
+  }
+
+  .prose-biarritz {
+    color: var(--color-ink-soft);
+    line-height: 1.8;
+  }
+
+  .prose-biarritz h2,
+  .prose-biarritz h3 {
+    color: var(--color-text);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+
+  .prose-biarritz a {
+    color: var(--color-brand-dark);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .prose-biarritz a:hover {
+    color: var(--color-brand-deep);
+  }
+
+  .prose-biarritz img {
+    height: auto;
+    max-width: 100%;
+    border-radius: var(--radius-lg);
+  }
+
+  .prose-biarritz table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+}
+
+@media (min-width: 640px) {
+  .site-container {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-container {
+    padding-inline: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

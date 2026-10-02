@@ -1,22 +1,19 @@
-"use client";
 import CategoriaButton from "./CategoriaButton";
 
 type Props = {
   slug: string;
   nome: string;
+  index: number;
 };
 
-export default function CategoriaSlide({ slug, nome }: Props) {
+export default function CategoriaSlide({ slug, nome, index }: Props) {
   return (
-    <div
-      className="
-        h-18
-        sm:h-22
-        flex
-        items-center
-      "
-    >
-      <CategoriaButton href={`/categorias/${slug}`} label={nome} />
+    <div className="h-52 sm:h-60">
+      <CategoriaButton
+        href={`/categorias/${slug}`}
+        label={nome}
+        index={index}
+      />
     </div>
   );
 }
