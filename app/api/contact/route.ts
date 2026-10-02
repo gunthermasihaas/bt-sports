@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { z } from "zod";
 
 import { contactRateLimit } from "@/lib/rate-limit";
@@ -147,27 +147,11 @@ export async function POST(req: Request) {
 
     const { nome, email, telefone, estado, cidade, mensagem } = result.data;
 
-    const smtpHost = getRequiredEnv("SMTP_HOST");
-    const smtpPortRaw = getRequiredEnv("SMTP_PORT");
-    const smtpUser = getRequiredEnv("SMTP_USER");
-    const smtpPass = getRequiredEnv("SMTP_PASS");
+    const resendApiKey = getRequiredEnv("RESEND_API_KEY");
+    const resendFromEmail = getRequiredEnv("RESEND_FROM_EMAIL");
     const adminEmail = getRequiredEnv("ADMIN_EMAIL");
 
-    const smtpPort = Number(smtpPortRaw);
-
-    if (!Number.isInteger(smtpPort) || smtpPort <= 0 || smtpPort > 65535) {
-      throw new Error("SMTP_PORT inválida");
-    }
-
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
+    const resend = new Resend(resendApiKey);
 
     const safeNome = escapeHtml(nome);
     const safeEmail = escapeHtml(email);
@@ -176,8 +160,8 @@ export async function POST(req: Request) {
     const safeCidade = escapeHtml(cidade || "-");
     const safeMensagem = escapeHtml(mensagem).replace(/\r?\n/g, "<br />");
 
-    await transporter.sendMail({
-      from: `"Contato Site" <${smtpUser}>`,
+    const { error } = await resend.emails.send({
+      from: `Contato Site <${resendFromEmail}>`,
       to: adminEmail,
       replyTo: email,
       subject: "Novo contato pelo site",
@@ -235,6 +219,20 @@ export async function POST(req: Request) {
         </html>
       `,
     });
+
+    if (error) {
+      console.error("POST /api/contact Resend", error);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Erro ao enviar mensagem",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
 
     return NextResponse.json(
       {
