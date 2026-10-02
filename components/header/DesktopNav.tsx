@@ -28,13 +28,13 @@ export function DesktopNav({ links }: Props) {
 
   return (
     <div className="hidden items-center gap-1 lg:flex">
-      {links.map((link, i) => {
+      {links.map((link, index) => {
         const active =
           Boolean(link.href) && isHrefActive(pathname, link.href as string);
 
         const className = [
-          "group relative rounded-full px-3.5 py-2 text-sm font-semibold",
-          "transition-all duration-200 ease-out",
+          "rounded-full px-3.5 py-2 text-sm font-semibold",
+          "transition-colors duration-200",
           "focus-visible:outline-none",
           "focus-visible:ring-2",
           "focus-visible:ring-brand",
@@ -43,7 +43,7 @@ export function DesktopNav({ links }: Props) {
           link.className ?? "",
           active
             ? (link.activeClassName ??
-              "bg-[var(--header-nav-active-bg)] text-[var(--header-nav-active-color)] shadow-sm")
+              "bg-[var(--header-nav-active-bg)] text-[var(--header-nav-active-color)]")
             : "",
         ]
           .filter(Boolean)
@@ -64,7 +64,7 @@ export function DesktopNav({ links }: Props) {
 
         return (
           <button
-            key={`${link.label}-${i}`}
+            key={`${link.label}-${index}`}
             type="button"
             onClick={link.onClick}
             className={className}

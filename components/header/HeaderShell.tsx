@@ -182,14 +182,12 @@ export function HeaderShell({
 
   const contactButtonClassName = [
     "inline-flex min-h-10 items-center justify-center",
-    "rounded-full px-5",
-    "border border-brand",
-    "bg-brand",
-    "text-sm font-bold text-on-brand",
+    "rounded-full border px-5",
+    "text-sm font-bold",
     "transition-colors duration-200",
-    "hover:border-brand-dark",
-    "hover:bg-brand-dark",
-    "hover:text-white",
+    scrolled
+      ? "border-brand bg-brand text-on-brand hover:border-brand-dark hover:bg-brand-dark hover:text-on-brand"
+      : "border-brand bg-brand text-on-brand hover:border-brand-dark hover:bg-brand-dark hover:text-on-brand",
     "focus-visible:outline-none",
     "focus-visible:ring-2",
     "focus-visible:ring-brand",

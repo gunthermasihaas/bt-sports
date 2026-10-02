@@ -29,27 +29,31 @@ export default function HeaderAdmin({ role }: Props) {
   }
 
   const publicLinkClass =
-    "rounded-full px-2.5 py-1.5 text-xs font-semibold text-admin transition-all duration-200 hover:bg-surface hover:text-brand-dark hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+    "rounded-full px-2.5 py-1.5 text-xs font-semibold text-admin transition-colors duration-200 hover:bg-admin-muted hover:text-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
 
   const adminLinkClass =
-    "rounded-full px-2.5 py-1.5 text-xs font-semibold text-brand-dark transition-all duration-200 hover:bg-brand-soft hover:text-brand-deep hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
+    "rounded-full px-2.5 py-1.5 text-xs font-semibold text-brand-dark transition-colors duration-200 hover:bg-brand-soft hover:text-brand-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
 
-  const adminActiveClass =
-    "bg-brand-soft text-brand-deep shadow-sm ring-1 ring-brand/15";
+  const adminActiveClass = "bg-brand-soft text-brand-deep";
 
   const logoutButtonClass = [
     "rounded-full",
-    "border border-danger/20",
-    "bg-danger/5",
-    "px-3 py-1.5",
-    "text-xs font-semibold text-danger",
-    "transition-colors duration-200",
-    "hover:border-danger/30",
-    "hover:bg-danger/10",
-    "hover:text-danger",
+    "border",
+    "border-[var(--color-error)]",
+    "bg-white",
+    "px-3",
+    "py-1.5",
+    "text-xs",
+    "font-semibold",
+    "text-[var(--color-error)]",
+    "transition-colors",
+    "duration-200",
+    "hover:bg-[var(--color-error)]",
+    "hover:text-white",
+    "hover:border-[var(--color-error)]",
     "focus-visible:outline-none",
     "focus-visible:ring-2",
-    "focus-visible:ring-danger",
+    "focus-visible:ring-[var(--color-error)]",
     "focus-visible:ring-offset-2",
   ].join(" ");
 
@@ -62,9 +66,9 @@ export default function HeaderAdmin({ role }: Props) {
         <Link
           href="/admin"
           aria-label="Biarritz Turismo Sports — administração"
-          className="group flex shrink-0 items-center gap-2 rounded-full px-2 py-1.5 transition-all duration-200 hover:bg-brand-soft hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="group flex shrink-0 items-center gap-2 rounded-full px-2 py-1.5 transition-colors duration-200 hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-xs font-black text-on-brand shadow-sm transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-xs font-black text-on-brand shadow-sm transition-transform duration-200 group-hover:scale-105">
             BT
           </span>
 
@@ -169,25 +173,25 @@ export default function HeaderAdmin({ role }: Props) {
                     label: "Experiências",
                     href: "/categorias",
                     className:
-                      "block rounded-xl px-3 py-3 text-base font-semibold text-admin transition-all duration-200 hover:bg-admin-muted hover:text-brand-dark hover:shadow-sm",
+                      "block rounded-xl px-3 py-3 text-base font-semibold text-admin transition-colors duration-200 hover:bg-admin-muted hover:text-brand-dark",
                   },
                   {
                     label: "Pacotes",
                     href: "/pacotes",
                     className:
-                      "block rounded-xl px-3 py-3 text-base font-semibold text-admin transition-all duration-200 hover:bg-admin-muted hover:text-brand-dark hover:shadow-sm",
+                      "block rounded-xl px-3 py-3 text-base font-semibold text-admin transition-colors duration-200 hover:bg-admin-muted hover:text-brand-dark",
                   },
                   {
                     label: "Sobre nós",
                     href: "/sobre",
                     className:
-                      "block rounded-xl px-3 py-3 text-base font-semibold text-admin transition-all duration-200 hover:bg-admin-muted hover:text-brand-dark hover:shadow-sm",
+                      "block rounded-xl px-3 py-3 text-base font-semibold text-admin transition-colors duration-200 hover:bg-admin-muted hover:text-brand-dark",
                   },
                   {
                     label: "Contato",
                     href: "/contato",
                     className:
-                      "block rounded-xl px-3 py-3 text-base font-semibold text-admin transition-all duration-200 hover:bg-admin-muted hover:text-brand-dark hover:shadow-sm",
+                      "block rounded-xl px-3 py-3 text-base font-semibold text-admin transition-colors duration-200 hover:bg-admin-muted hover:text-brand-dark",
                   },
                 ],
               },
@@ -197,26 +201,22 @@ export default function HeaderAdmin({ role }: Props) {
                   {
                     label: "Dashboard",
                     href: "/admin",
-                    className: `block rounded-xl px-3 py-3 text-base font-semibold text-brand-dark transition-all duration-200 hover:bg-brand-soft hover:text-brand-deep hover:shadow-sm ${
-                      isActive("/admin") ? "bg-brand-soft shadow-sm" : ""
+                    className: `block rounded-xl px-3 py-3 text-base font-semibold text-brand-dark transition-colors duration-200 hover:bg-brand-soft hover:text-brand-deep ${
+                      isActive("/admin") ? "bg-brand-soft" : ""
                     }`,
                   },
                   {
                     label: "Pacotes",
                     href: "/admin/pacotes",
-                    className: `block rounded-xl px-3 py-3 text-base font-semibold text-brand-dark transition-all duration-200 hover:bg-brand-soft hover:text-brand-deep hover:shadow-sm ${
-                      isActive("/admin/pacotes")
-                        ? "bg-brand-soft shadow-sm"
-                        : ""
+                    className: `block rounded-xl px-3 py-3 text-base font-semibold text-brand-dark transition-colors duration-200 hover:bg-brand-soft hover:text-brand-deep ${
+                      isActive("/admin/pacotes") ? "bg-brand-soft" : ""
                     }`,
                   },
                   {
                     label: "Categorias",
                     href: "/admin/categorias",
-                    className: `block rounded-xl px-3 py-3 text-base font-semibold text-brand-dark transition-all duration-200 hover:bg-brand-soft hover:text-brand-deep hover:shadow-sm ${
-                      isActive("/admin/categorias")
-                        ? "bg-brand-soft shadow-sm"
-                        : ""
+                    className: `block rounded-xl px-3 py-3 text-base font-semibold text-brand-dark transition-colors duration-200 hover:bg-brand-soft hover:text-brand-deep ${
+                      isActive("/admin/categorias") ? "bg-brand-soft" : ""
                     }`,
                   },
                   ...(isAdmin
@@ -224,10 +224,8 @@ export default function HeaderAdmin({ role }: Props) {
                         {
                           label: "Usuários",
                           href: "/admin/users",
-                          className: `block rounded-xl px-3 py-3 text-base font-semibold text-brand-dark transition-all duration-200 hover:bg-brand-soft hover:text-brand-deep hover:shadow-sm ${
-                            isActive("/admin/users")
-                              ? "bg-brand-soft shadow-sm"
-                              : ""
+                          className: `block rounded-xl px-3 py-3 text-base font-semibold text-brand-dark transition-colors duration-200 hover:bg-brand-soft hover:text-brand-deep ${
+                            isActive("/admin/users") ? "bg-brand-soft" : ""
                           }`,
                         },
                       ]
@@ -241,7 +239,7 @@ export default function HeaderAdmin({ role }: Props) {
                     label: "Sair",
                     onClick: logout,
                     className:
-                      "block w-full rounded-xl border border-danger/10 bg-danger/5 px-3 py-3 text-left text-base font-bold text-danger transition-all duration-200 hover:border-danger/20 hover:bg-danger/10 hover:text-danger hover:shadow-sm",
+                      "block w-full rounded-xl border border-danger bg-white px-3 py-3 text-left text-base font-semibold text-danger transition-colors duration-200 hover:border-danger hover:bg-danger hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger",
                   },
                 ],
               },
