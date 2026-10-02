@@ -33,11 +33,11 @@
     "@vercel/blob": "^2.0.1",
     "bcrypt": "^6.0.0",
     "isomorphic-dompurify": "^4.3.0",
-    "next": "^16.3.6",
+    "next": "^16.3.8",
     "next-auth": "^4.24.15",
     "nodemailer": "^7.0.13",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "react-hook-form": "^7.71.1",
     "slugify": "^1.6.6",
     "sonner": "^2.0.7",
@@ -49,14 +49,14 @@
     "@tailwindcss/typography": "^0.5.19",
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",
-    "@types/nodemailer": "^7.0.9",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "^16.3.6",
+    "eslint-config-next": "^16.3.8",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^6.0.3"
   }
 }
