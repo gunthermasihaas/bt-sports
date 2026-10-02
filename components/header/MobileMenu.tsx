@@ -18,24 +18,29 @@ type Props = {
 
 export function MobileMenu({ sections }: Props) {
   return (
-    <div className="mt-6 space-y-6">
+    <div className="mt-6 space-y-7">
       {sections.map((section, i) => (
-        <div key={i}>
+        <section key={i}>
           {section.title && (
-            <p className="text-xs font-semibold uppercase opacity-60">
+            <p className="px-1 text-[10px] font-bold uppercase tracking-[0.16em] text-muted">
               {section.title}
             </p>
           )}
 
-          <div className="mt-2 space-y-2">
+          <div className="mt-2 space-y-1.5">
             {section.items.map((item, j) =>
               item.href ? (
-                <Link key={j} href={item.href} className={item.className}>
+                <Link
+                  key={`${item.href}-${j}`}
+                  href={item.href}
+                  className={item.className}
+                >
                   {item.label}
                 </Link>
               ) : (
                 <button
-                  key={j}
+                  key={`${item.label}-${j}`}
+                  type="button"
                   onClick={item.onClick}
                   className={item.className}
                 >
@@ -44,7 +49,7 @@ export function MobileMenu({ sections }: Props) {
               )
             )}
           </div>
-        </div>
+        </section>
       ))}
     </div>
   );

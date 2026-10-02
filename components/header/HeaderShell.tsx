@@ -144,16 +144,22 @@ export function HeaderShell({
           "--header-nav-color": "var(--color-text)",
           "--header-nav-hover-bg": "var(--color-brand-soft)",
           "--header-nav-hover-color": "var(--color-brand-dark)",
+          "--header-nav-active-bg": "var(--color-brand-soft)",
+          "--header-nav-active-color": "var(--color-brand-deep)",
         }
       : {
           "--header-nav-color": "#ffffff",
           "--header-nav-hover-bg": "rgb(255 255 255 / 0.12)",
           "--header-nav-hover-color": "#ffffff",
+          "--header-nav-active-bg": "rgb(255 255 255 / 0.15)",
+          "--header-nav-active-color": "#ffffff",
         }
     : {
         "--header-nav-color": "var(--color-text)",
         "--header-nav-hover-bg": "var(--color-brand-soft)",
         "--header-nav-hover-color": "var(--color-brand-dark)",
+        "--header-nav-active-bg": "var(--color-brand-soft)",
+        "--header-nav-active-color": "var(--color-brand-deep)",
       };
 
   const logoWrapperClassName = isOverlay
@@ -170,21 +176,34 @@ export function HeaderShell({
 
   const currencyButtonClassName = isOverlay
     ? scrolled
-      ? "border-default bg-surface text-default shadow-sm hover:border-brand hover:bg-brand-soft hover:text-brand-dark"
+      ? "border-default bg-surface text-default shadow-sm hover:border-brand hover:bg-brand-soft hover:text-brand-dark hover:shadow-md"
       : "border-white/20 bg-[rgb(0_0_0_/_0.30)] text-white shadow-sm backdrop-blur-md hover:border-white/40 hover:bg-[rgb(0_0_0_/_0.45)]"
-    : "border-default bg-surface text-default shadow-sm hover:border-brand hover:bg-brand-soft hover:text-brand-dark";
+    : "border-default bg-surface text-default shadow-sm hover:border-brand hover:bg-brand-soft hover:text-brand-dark hover:shadow-md";
 
-  const contactButtonClassName = isOverlay
-    ? scrolled
-      ? "button-primary min-h-10 px-5"
-      : "inline-flex min-h-10 items-center justify-center rounded-full border border-white/20 bg-brand px-5 text-sm font-bold text-on-brand shadow-sm transition hover:bg-brand-dark focus-ring-brand"
-    : "button-primary min-h-10 px-5";
+  const contactButtonClassName = [
+    "inline-flex min-h-10 items-center justify-center",
+    "rounded-full px-5",
+    "border border-brand",
+    "bg-brand",
+    "text-sm font-bold text-on-brand",
+    "transition-colors duration-200",
+    "hover:border-brand-dark",
+    "hover:bg-brand-dark",
+    "hover:text-white",
+    "focus-visible:outline-none",
+    "focus-visible:ring-2",
+    "focus-visible:ring-brand",
+    "focus-visible:ring-offset-2",
+    scrolled
+      ? "focus-visible:ring-offset-white"
+      : "focus-visible:ring-offset-transparent",
+  ].join(" ");
 
   const mobileMenuButtonClassName = isOverlay
     ? scrolled
       ? "border-default bg-surface text-default shadow-sm hover:border-brand hover:bg-brand-soft hover:text-brand-dark"
       : "border-white/20 bg-[rgb(0_0_0_/_0.30)] text-white shadow-sm backdrop-blur-md hover:border-white/40 hover:bg-[rgb(0_0_0_/_0.45)]"
-    : "bg-brand-soft text-brand-dark hover:bg-brand hover:text-on-brand";
+    : "border-default bg-surface text-default hover:border-brand hover:bg-brand-soft hover:text-brand-dark";
 
   return (
     <>
@@ -211,7 +230,7 @@ export function HeaderShell({
             <button
               type="button"
               onClick={handleOpenCurrency}
-              className={`rounded-full border px-4 py-2 text-xs font-bold transition focus-ring-brand ${currencyButtonClassName}`}
+              className={`rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 focus-ring-brand ${currencyButtonClassName}`}
             >
               EUR / BRL
             </button>
@@ -226,7 +245,7 @@ export function HeaderShell({
               type="button"
               onClick={handleOpenCurrency}
               aria-label="Consultar câmbio"
-              className={`rounded-full border px-3 py-2 text-xs font-bold transition focus-ring-brand ${currencyButtonClassName}`}
+              className={`rounded-full border px-3 py-2 text-xs font-bold transition-all duration-200 focus-ring-brand ${currencyButtonClassName}`}
             >
               EUR
             </button>
@@ -236,7 +255,7 @@ export function HeaderShell({
               onClick={() => setMenuOpen(true)}
               aria-label="Abrir menu"
               aria-expanded={menuOpen}
-              className={`flex h-10 w-10 items-center justify-center rounded-full border transition focus-ring-brand ${mobileMenuButtonClassName}`}
+              className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 focus-ring-brand ${mobileMenuButtonClassName}`}
             >
               <svg
                 aria-hidden="true"
@@ -272,7 +291,7 @@ export function HeaderShell({
                 type="button"
                 onClick={handleCloseMenu}
                 aria-label="Fechar menu"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-muted transition hover:bg-brand-soft hover:text-brand-dark focus-ring-brand"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-muted transition-all duration-200 hover:bg-brand-soft hover:text-brand-dark hover:shadow-sm focus-ring-brand"
               >
                 <svg
                   aria-hidden="true"
@@ -298,7 +317,7 @@ export function HeaderShell({
                   setMenuOpen(false);
                   setCurrencyOpen(true);
                 }}
-                className="flex w-full items-center justify-between rounded-xl bg-surface-muted px-4 py-4 text-left font-semibold text-default transition hover:bg-brand-soft focus-ring-brand"
+                className="flex w-full items-center justify-between rounded-xl bg-surface-muted px-4 py-4 text-left font-semibold text-default transition-all duration-200 hover:bg-brand-soft hover:text-brand-dark hover:shadow-sm focus-ring-brand"
               >
                 <span>Cotação de moedas</span>
                 <span className="text-brand-dark">EUR / BRL</span>

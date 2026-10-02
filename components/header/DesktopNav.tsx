@@ -1,42 +1,62 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type Item = {
   label: string;
   href?: string;
   onClick?: () => void;
   className?: string;
+  activeClassName?: string;
 };
 
 type Props = {
   links: Item[];
 };
 
+function isHrefActive(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === "/";
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function DesktopNav({ links }: Props) {
+  const pathname = usePathname();
+
   return (
-    <div className="hidden items-center gap-x-1 lg:flex">
+    <div className="hidden items-center gap-1 lg:flex">
       {links.map((link, i) => {
-        const hasCustomClass = Boolean(link.className);
+        const active =
+          Boolean(link.href) && isHrefActive(pathname, link.href as string);
 
         const className = [
-          "rounded-full px-3.5 py-2 text-sm font-semibold",
-          "text-[var(--header-nav-color)]",
-          "transition-[background-color,color,transform,box-shadow]",
-          "duration-200",
-          !hasCustomClass &&
-            "hover:bg-[var(--header-nav-hover-bg)] hover:text-[var(--header-nav-hover-color)]",
+          "group relative rounded-full px-3.5 py-2 text-sm font-semibold",
+          "transition-all duration-200 ease-out",
           "focus-visible:outline-none",
           "focus-visible:ring-2",
-          "focus-visible:ring-[var(--color-brand)]",
+          "focus-visible:ring-brand",
           "focus-visible:ring-offset-2",
           "focus-visible:ring-offset-transparent",
           link.className ?? "",
+          active
+            ? (link.activeClassName ??
+              "bg-[var(--header-nav-active-bg)] text-[var(--header-nav-active-color)] shadow-sm")
+            : "",
         ]
           .filter(Boolean)
           .join(" ");
 
         if (link.href) {
           return (
-            <Link key={link.href} href={link.href} className={className}>
+            <Link
+              key={link.href}
+              href={link.href}
+              className={className}
+              aria-current={active ? "page" : undefined}
+            >
               {link.label}
             </Link>
           );
