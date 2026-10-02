@@ -15,13 +15,15 @@ export function DesktopNav({ links }: Props) {
   return (
     <div className="hidden items-center gap-x-1 lg:flex">
       {links.map((link, i) => {
+        const hasCustomClass = Boolean(link.className);
+
         const className = [
           "rounded-full px-3.5 py-2 text-sm font-semibold",
           "text-[var(--header-nav-color)]",
-          "transition-[background-color,color,transform]",
+          "transition-[background-color,color,transform,box-shadow]",
           "duration-200",
-          "hover:bg-[var(--header-nav-hover-bg)]",
-          "hover:text-[var(--header-nav-hover-color)]",
+          !hasCustomClass &&
+            "hover:bg-[var(--header-nav-hover-bg)] hover:text-[var(--header-nav-hover-color)]",
           "focus-visible:outline-none",
           "focus-visible:ring-2",
           "focus-visible:ring-[var(--color-brand)]",

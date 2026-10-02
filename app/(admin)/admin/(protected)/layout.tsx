@@ -1,6 +1,8 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+
+import HeaderAdmin from "@/components/layout/header-admin";
+import { authOptions } from "@/lib/auth";
 
 export default async function AdminLayout({
   children,
@@ -15,5 +17,11 @@ export default async function AdminLayout({
     redirect("/admin/login");
   }
 
-  return <main className="min-h-screen">{children}</main>;
+  return (
+    <div className="min-h-screen bg-admin">
+      <HeaderAdmin role={role} />
+
+      <main className="min-h-[calc(100vh-4.5rem)]">{children}</main>
+    </div>
+  );
 }

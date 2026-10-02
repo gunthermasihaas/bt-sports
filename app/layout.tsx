@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
-
-import Header from "@/components/layout/header";
-import Footer from "@/components/layout/footer";
-import { authOptions } from "@/lib/auth";
 
 import OrganizationJsonLd from "./seo/OrganizationJsonLd";
 import Providers from "./providers";
@@ -62,15 +57,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
-
-  const role = session?.user?.role ?? null;
-
   return (
     <html lang="pt-BR">
       <body
@@ -79,10 +70,9 @@ export default async function RootLayout({
         <OrganizationJsonLd />
 
         <Providers>
-          <Header role={role} />
           {children}
+
           <Toaster richColors position="top-right" />
-          <Footer />
         </Providers>
       </body>
     </html>
