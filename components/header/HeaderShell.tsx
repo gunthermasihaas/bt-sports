@@ -16,6 +16,11 @@ type DailyItem = {
   timestamp: string;
 };
 
+type CurrencyState = {
+  current: CurrentApi | null;
+  history: DailyItem[];
+};
+
 type HeaderMode = "default" | "public-overlay";
 
 type Props = {
@@ -25,6 +30,11 @@ type Props = {
   bgClass: string;
   borderClass: string;
   mode?: HeaderMode;
+};
+
+const emptyCurrency: CurrencyState = {
+  current: null,
+  history: [],
 };
 
 export function HeaderShell({
@@ -41,20 +51,9 @@ export function HeaderShell({
   const [error, setError] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const [usd, setUsd] = useState({
-    current: null as CurrentApi | null,
-    history: [] as DailyItem[],
-  });
-
-  const [eur, setEur] = useState({
-    current: null as CurrentApi | null,
-    history: [] as DailyItem[],
-  });
-
-  const [gbp, setGbp] = useState({
-    current: null as CurrentApi | null,
-    history: [] as DailyItem[],
-  });
+  const [usd, setUsd] = useState<CurrencyState>(emptyCurrency);
+  const [eur, setEur] = useState<CurrencyState>(emptyCurrency);
+  const [gbp, setGbp] = useState<CurrencyState>(emptyCurrency);
 
   const currencyLoadedRef = useRef(false);
 
@@ -183,11 +182,17 @@ export function HeaderShell({
         "--header-nav-active-color": "var(--color-brand-deep)",
       };
 
-  const logoWrapperClassName = isOverlay
-    ? scrolled
-      ? "flex items-center rounded-full border border-default bg-surface px-1 py-1 text-default shadow-sm"
-      : "flex items-center rounded-full border border-white/20 bg-[rgb(0_0_0_/_0.30)] px-1 py-1 text-white shadow-sm backdrop-blur-md"
-    : "flex items-center text-default";
+  const logoWrapperClassName = [
+    "flex items-center rounded-full transition-all duration-300",
+    "text-[var(--header-nav-color)]",
+    isOverlay
+      ? scrolled
+        ? "border border-default bg-surface px-1 py-1 shadow-sm"
+        : "border border-white/20 bg-[rgb(0_0_0_/_0.30)] px-1 py-1 shadow-sm backdrop-blur-md"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const navigationWrapperClassName = isOverlay
     ? scrolled
@@ -205,10 +210,10 @@ export function HeaderShell({
     "inline-flex min-h-10 items-center justify-center",
     "rounded-full border px-5",
     "text-sm font-bold",
-    "transition-colors duration-200",
-    scrolled
-      ? "border-brand bg-brand text-on-brand hover:border-brand-dark hover:bg-brand-dark hover:text-on-brand"
-      : "border-brand bg-brand text-on-brand hover:border-brand-dark hover:bg-brand-dark hover:text-on-brand",
+    "transition-[background-color,border-color,color,box-shadow,transform]",
+    "duration-200",
+    "border-brand bg-brand text-on-brand",
+    "hover:border-brand-dark hover:bg-brand-dark hover:text-on-brand hover:shadow-md",
     "focus-visible:outline-none",
     "focus-visible:ring-2",
     "focus-visible:ring-brand",
@@ -251,7 +256,7 @@ export function HeaderShell({
               onClick={handleOpenCurrency}
               className={`rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 focus-ring-brand ${currencyButtonClassName}`}
             >
-              Câmbio
+              EUR / BRL
             </button>
 
             <Link href="/contato" className={contactButtonClassName}>
@@ -266,7 +271,7 @@ export function HeaderShell({
               aria-label="Consultar câmbio"
               className={`rounded-full border px-3 py-2 text-xs font-bold transition-all duration-200 focus-ring-brand ${currencyButtonClassName}`}
             >
-              Câmbio
+              EUR
             </button>
 
             <button
@@ -339,7 +344,7 @@ export function HeaderShell({
                 className="flex w-full items-center justify-between rounded-xl bg-surface-muted px-4 py-4 text-left font-semibold text-default transition-all duration-200 hover:bg-brand-soft hover:text-brand-dark hover:shadow-sm focus-ring-brand"
               >
                 <span>Cotação de moedas</span>
-                <span className="text-brand-dark">USD / EUR / GBP</span>
+                <span className="text-brand-dark">EUR / BRL</span>
               </button>
             </div>
 

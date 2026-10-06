@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-
+import { BrandLogo } from "../brand/BrandLogo";
 import { MobileMenu } from "../header/MobileMenu";
 
 type Props = {
@@ -66,23 +66,11 @@ export default function HeaderAdmin({ role }: Props) {
         <Link
           href="/admin"
           aria-label="Biarritz Turismo Sports — administração"
-          className="group flex shrink-0 items-center gap-2 rounded-full px-2 py-1.5 transition-colors duration-200 hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="group flex shrink-0 items-center rounded-full px-2 py-1.5 text-admin transition-colors hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-xs font-black text-on-brand shadow-sm transition-transform duration-200 group-hover:scale-105">
-            BT
-          </span>
+          <BrandLogo size="sm" />
 
-          <span className="hidden leading-none sm:block">
-            <span className="block text-xs font-extrabold tracking-tight text-admin">
-              BIARRITZ
-            </span>
-
-            <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-[0.16em] text-admin-muted">
-              Turismo Sports
-            </span>
-          </span>
-
-          <span className="hidden rounded-full bg-brand-soft px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-brand-dark md:inline-flex">
+          <span className="ml-2 hidden rounded-full bg-brand-soft px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-brand-dark md:inline-flex">
             Admin
           </span>
         </Link>
