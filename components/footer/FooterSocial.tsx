@@ -44,7 +44,7 @@ export function FooterSocial() {
 
       <div className="mt-6 flex flex-col gap-3 text-sm text-white/65">
         <a
-          href="https://www.facebook.com/biarritzsports/"
+          href="https://www.facebook.com/people/Biarritz-Turismo-Sports/61572129720029/"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 transition hover:text-white"

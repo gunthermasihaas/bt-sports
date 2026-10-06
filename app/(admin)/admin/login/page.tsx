@@ -50,99 +50,142 @@ export default function AdminLoginPage() {
     router.push(res.url ?? "/admin");
   }
 
-  if (status === "loading") {
-    return null;
-  }
-
   return (
-    <div className="flex min-h-screen flex-col justify-center bg-surface px-6 py-12 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h2 className="text-center text-2xl font-bold tracking-tight text-color-text">
-          Login Administração
-        </h2>
-      </div>
+    <main className="flex min-h-screen items-center justify-center bg-admin px-6 py-12">
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-base font-black text-on-brand shadow-sm">
+            BT
+          </div>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form
-          onSubmit={handleSubmit}
-          className="
-            space-y-6
-            rounded-lg
-            border border-muted
-            bg-surface
-            p-6
-            shadow-sm
-          "
-        >
-          {error && (
-            <div className="rounded-md bg-error/10 px-4 py-3 text-sm text-error">
-              {error}
+          <h1 className="text-2xl font-bold tracking-tight text-admin">
+            Administração
+          </h1>
+
+          <p className="mt-2 text-sm text-admin-muted">
+            Entre para acessar o painel administrativo.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-admin bg-admin p-6 shadow-sm sm:p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div
+                role="alert"
+                className="rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm font-medium text-danger"
+              >
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-admin"
+              >
+                Email
+              </label>
+
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                disabled={loading}
+                className="
+                  mt-2 block w-full rounded-xl
+                  border border-admin
+                  bg-admin-muted
+                  px-3.5 py-3
+                  text-sm text-admin
+                  outline-none
+                  transition-[border-color,box-shadow,background-color]
+                  duration-200
+                  placeholder:text-admin-muted
+                  hover:border-brand/40
+                  focus:border-brand
+                  focus:bg-admin
+                  focus:ring-2
+                  focus:ring-brand/20
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
+                "
+              />
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm font-medium text-color-text">
-              Email
-            </label>
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-admin"
+              >
+                Senha
+              </label>
 
-            <input
-              name="email"
-              type="email"
-              required
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                disabled={loading}
+                className="
+                  mt-2 block w-full rounded-xl
+                  border border-admin
+                  bg-admin-muted
+                  px-3.5 py-3
+                  text-sm text-admin
+                  outline-none
+                  transition-[border-color,box-shadow,background-color]
+                  duration-200
+                  placeholder:text-admin-muted
+                  hover:border-brand/40
+                  focus:border-brand
+                  focus:bg-admin
+                  focus:ring-2
+                  focus:ring-brand/20
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
+                "
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
               className="
-                mt-2 block w-full rounded-md
-                bg-surface-muted
-                px-3 py-2
-                text-color-text
-                border border-muted
-                focus:border-brand
-                focus-ring-brand
-                transition
+                flex w-full items-center justify-center
+                rounded-xl
+                bg-brand
+                px-4 py-3
+                text-sm font-bold
+                text-on-brand
+                shadow-sm
+                transition-[background-color,box-shadow,transform]
+                duration-200
+                hover:bg-brand-dark
+                hover:shadow-md
+                active:translate-y-px
+                active:shadow-sm
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-brand
+                focus-visible:ring-offset-2
+                disabled:cursor-not-allowed
+                disabled:opacity-60
+                disabled:hover:bg-brand
+                disabled:hover:shadow-sm
               "
-            />
-          </div>
+            >
+              {loading ? "Entrando..." : "Entrar"}
+            </button>
+          </form>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-color-text">
-              Senha
-            </label>
-
-            <input
-              name="password"
-              type="password"
-              required
-              className="
-                mt-2 block w-full rounded-md
-                bg-surface-muted
-                px-3 py-2
-                text-color-text
-                border border-muted
-                focus:border-brand
-                focus-ring-brand
-                transition
-              "
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="
-              flex w-full justify-center rounded-md
-              bg-brand
-              px-3 py-2
-              text-sm font-semibold
-              text-on-brand
-              transition-colors
-              hover:bg-brand-dark
-              disabled:opacity-50
-              focus-ring-brand
-            "
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
+        <p className="mt-6 text-center text-xs text-admin-muted">
+          Biarritz Turismo Sports
+        </p>
       </div>
-    </div>
+    </main>
   );
 }

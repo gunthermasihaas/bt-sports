@@ -51,6 +51,11 @@ export function HeaderShell({
     history: [] as DailyItem[],
   });
 
+  const [gbp, setGbp] = useState({
+    current: null as CurrentApi | null,
+    history: [] as DailyItem[],
+  });
+
   const currencyLoadedRef = useRef(false);
 
   const isOverlay = mode === "public-overlay";
@@ -60,21 +65,32 @@ export function HeaderShell({
       setLoading(true);
       setError(false);
 
-      const [currentRes, usdHistRes, eurHistRes] = await Promise.all([
-        fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL", {
-          cache: "no-store",
-        }),
-        fetch("https://economia.awesomeapi.com.br/json/daily/USD-BRL/30"),
-        fetch("https://economia.awesomeapi.com.br/json/daily/EUR-BRL/30"),
-      ]);
+      const [currentRes, usdHistRes, eurHistRes, gbpHistRes] =
+        await Promise.all([
+          fetch(
+            "https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,GBP-BRL",
+            {
+              cache: "no-store",
+            }
+          ),
+          fetch("https://economia.awesomeapi.com.br/json/daily/USD-BRL/30"),
+          fetch("https://economia.awesomeapi.com.br/json/daily/EUR-BRL/30"),
+          fetch("https://economia.awesomeapi.com.br/json/daily/GBP-BRL/30"),
+        ]);
 
-      if (!currentRes.ok || !usdHistRes.ok || !eurHistRes.ok) {
+      if (
+        !currentRes.ok ||
+        !usdHistRes.ok ||
+        !eurHistRes.ok ||
+        !gbpHistRes.ok
+      ) {
         throw new Error("Falha ao carregar dados de câmbio.");
       }
 
       const currentData = await currentRes.json();
       const usdHist = await usdHistRes.json();
       const eurHist = await eurHistRes.json();
+      const gbpHist = await gbpHistRes.json();
 
       setUsd({
         current: currentData.USDBRL,
@@ -84,6 +100,11 @@ export function HeaderShell({
       setEur({
         current: currentData.EURBRL,
         history: eurHist,
+      });
+
+      setGbp({
+        current: currentData.GBPBRL,
+        history: gbpHist,
       });
     } catch {
       setError(true);
@@ -230,7 +251,7 @@ export function HeaderShell({
               onClick={handleOpenCurrency}
               className={`rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 focus-ring-brand ${currencyButtonClassName}`}
             >
-              EUR / BRL
+              Câmbio
             </button>
 
             <Link href="/contato" className={contactButtonClassName}>
@@ -245,7 +266,7 @@ export function HeaderShell({
               aria-label="Consultar câmbio"
               className={`rounded-full border px-3 py-2 text-xs font-bold transition-all duration-200 focus-ring-brand ${currencyButtonClassName}`}
             >
-              EUR
+              Câmbio
             </button>
 
             <button
@@ -318,7 +339,7 @@ export function HeaderShell({
                 className="flex w-full items-center justify-between rounded-xl bg-surface-muted px-4 py-4 text-left font-semibold text-default transition-all duration-200 hover:bg-brand-soft hover:text-brand-dark hover:shadow-sm focus-ring-brand"
               >
                 <span>Cotação de moedas</span>
-                <span className="text-brand-dark">EUR / BRL</span>
+                <span className="text-brand-dark">USD / EUR / GBP</span>
               </button>
             </div>
 
@@ -339,6 +360,7 @@ export function HeaderShell({
           onClose={() => setCurrencyOpen(false)}
           usd={usd}
           eur={eur}
+          gbp={gbp}
           loading={loading}
           error={error}
         />

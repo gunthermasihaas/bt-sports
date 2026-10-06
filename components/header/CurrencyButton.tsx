@@ -18,13 +18,14 @@ type CurrencyData = {
   history: DailyItem[];
 };
 
-type CurrencyType = "eur" | "usd";
+type CurrencyType = "eur" | "usd" | "gbp";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   usd: CurrencyData;
   eur: CurrencyData;
+  gbp: CurrencyData;
   loading: boolean;
   error: boolean;
 };
@@ -62,7 +63,6 @@ function CurrencyCard({
   active,
   onClick,
 }: {
-  type: CurrencyType;
   label: string;
   name: string;
   value: string;
@@ -158,8 +158,8 @@ function LoadingState() {
       aria-label="Carregando cotações"
       aria-busy="true"
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {[1, 2].map((item) => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {[1, 2, 3].map((item) => (
           <div
             key={item}
             className="animate-pulse rounded-2xl border border-default bg-surface p-5"
@@ -198,7 +198,7 @@ function ErrorState() {
         >
           <path d="M12 8v4" />
           <path d="M12 16h.01" />
-          <path d="M10.3 3.8 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
+          <path d="M10.3 3.8 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7 0l15.4a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
         </svg>
       </div>
 
@@ -219,12 +219,16 @@ export default function CurrencyButton({
   onClose,
   usd,
   eur,
+  gbp,
   loading,
   error,
 }: Props) {
   const [active, setActive] = useState<CurrencyType>("eur");
 
-  const activeCurrency = active === "eur" ? eur : usd;
+  const activeCurrency = active === "eur" ? eur : active === "usd" ? usd : gbp;
+
+  const hasCompleteCurrencyData =
+    usd.current !== null && eur.current !== null && gbp.current !== null;
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
@@ -235,7 +239,7 @@ export default function CurrencyButton({
 
       <div className="fixed inset-0 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
-          <DialogPanel className="w-full max-w-3xl overflow-hidden rounded-3xl border border-default bg-surface shadow-2xl">
+          <DialogPanel className="w-full max-w-4xl overflow-hidden rounded-3xl border border-default bg-surface shadow-2xl">
             <div className="border-b border-default px-5 py-5 sm:px-7">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -252,7 +256,7 @@ export default function CurrencyButton({
                         strokeLinejoin="round"
                       >
                         <path d="M12 2v20" />
-                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H7" />
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 1 1 0 7H7" />
                       </svg>
                     </span>
 
@@ -295,27 +299,34 @@ export default function CurrencyButton({
 
               {!loading && error && <ErrorState />}
 
-              {!loading && !error && usd.current && eur.current && (
+              {!loading && !error && hasCompleteCurrencyData && (
                 <>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <CurrencyCard
-                      type="usd"
                       label="USD"
                       name="Dólar americano"
-                      value={usd.current.bid}
-                      percentage={usd.current.pctChange}
+                      value={usd.current?.bid ?? "0"}
+                      percentage={usd.current?.pctChange ?? "0"}
                       active={active === "usd"}
                       onClick={() => setActive("usd")}
                     />
 
                     <CurrencyCard
-                      type="eur"
                       label="EUR"
                       name="Euro"
-                      value={eur.current.bid}
-                      percentage={eur.current.pctChange}
+                      value={eur.current?.bid ?? "0"}
+                      percentage={eur.current?.pctChange ?? "0"}
                       active={active === "eur"}
                       onClick={() => setActive("eur")}
+                    />
+
+                    <CurrencyCard
+                      label="GBP"
+                      name="Libra esterlina"
+                      value={gbp.current?.bid ?? "0"}
+                      percentage={gbp.current?.pctChange ?? "0"}
+                      active={active === "gbp"}
+                      onClick={() => setActive("gbp")}
                     />
                   </div>
 
@@ -328,7 +339,11 @@ export default function CurrencyButton({
 
                         <div className="mt-1 flex items-baseline gap-2">
                           <h3 className="text-base font-extrabold text-default">
-                            {active === "eur" ? "Euro" : "Dólar americano"}
+                            {active === "eur"
+                              ? "Euro"
+                              : active === "usd"
+                                ? "Dólar americano"
+                                : "Libra esterlina"}
                           </h3>
 
                           <span className="text-xs font-semibold text-muted">
@@ -349,17 +364,27 @@ export default function CurrencyButton({
                     </div>
 
                     <div className="p-3 sm:p-5">
-                      {active === "usd" ? (
+                      {active === "usd" && (
                         <CurrencyChart
                           data={usd.history}
-                          color="var(--color-brand-dark)"
+                          color="var(--color-brand)"
                           label="USD"
                         />
-                      ) : (
+                      )}
+
+                      {active === "eur" && (
                         <CurrencyChart
                           data={eur.history}
                           color="var(--color-brand)"
                           label="EUR"
+                        />
+                      )}
+
+                      {active === "gbp" && (
+                        <CurrencyChart
+                          data={gbp.history}
+                          color="var(--color-brand)"
+                          label="GBP"
                         />
                       )}
                     </div>
