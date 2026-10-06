@@ -18,18 +18,18 @@ export default function HeaderPublic({ isAdmin = false }: Props) {
         <Link
           href="/"
           aria-label="Biarritz Turismo Sports — início"
-          className="group flex items-center gap-3 rounded-full px-2.5 py-1.5 text-white transition-colors duration-200"
+          className="group flex items-center gap-3 rounded-full px-2.5 py-1.5 text-(--header-nav-color) transition-colors duration-200"
         >
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-sm font-black text-on-brand shadow-sm transition-all duration-200 group-hover:scale-105 group-hover:shadow-md">
             BT
           </span>
 
           <span className="hidden leading-none sm:block">
-            <span className="block text-sm font-extrabold tracking-tight text-white">
+            <span className="block text-sm font-extrabold tracking-tight text-(--header-nav-color)">
               BIARRITZ
             </span>
 
-            <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80">
+            <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-(--header-nav-color) opacity-80">
               Turismo Sports
             </span>
           </span>

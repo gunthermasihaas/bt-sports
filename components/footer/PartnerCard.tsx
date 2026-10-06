@@ -13,23 +13,25 @@ export function PartnerCard({ name, href, imgMobile, imgDesktop }: Props) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={`Visitar ${name}`}
       className="
-        group relative flex items-center justify-center
-        h-28 lg:h-32
+        group relative flex h-28 items-center justify-center
         rounded-xl
-        bg-surface-soft
         border border-transparent
+        bg-surface-soft
         transition-all duration-300
-        hover:bg-surface
-        hover:border-brand
-        hover:shadow-lg
         hover:-translate-y-1
-        focus-ring-brand
-        border-brand-hover
-        bg-surface-hover
+        hover:border-brand
+        hover:bg-surface
+        hover:shadow-lg
+        focus-visible:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-brand
+        focus-visible:ring-offset-2
+        focus-visible:ring-offset-brand-deep
       "
     >
-      <div className="relative w-full h-full p-6 lg:p-8">
+      <div className="relative h-full w-full p-6 lg:p-8">
         {imgMobile && (
           <Image
             src={imgMobile}
@@ -37,10 +39,10 @@ export function PartnerCard({ name, href, imgMobile, imgDesktop }: Props) {
             fill
             sizes="100vw"
             className="
-              object-contain
-              block lg:hidden
+              block object-contain
               transition-transform duration-300
               group-hover:scale-[0.92]
+              lg:hidden
             "
           />
         )}
@@ -49,7 +51,7 @@ export function PartnerCard({ name, href, imgMobile, imgDesktop }: Props) {
           src={imgDesktop}
           alt={name}
           fill
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 100vw"
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
           className={`
             object-contain
             transition-transform duration-300

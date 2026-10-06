@@ -55,7 +55,6 @@ function isPositive(value: string | number) {
 }
 
 function CurrencyCard({
-  type,
   label,
   name,
   value,

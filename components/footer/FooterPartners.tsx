@@ -1,8 +1,23 @@
-import { parceiros } from "@/data/sobreBiarritz";
+import { prisma } from "@/lib/prisma";
 
 import { PartnerCard } from "./PartnerCard";
 
-export function FooterPartners() {
+export async function FooterPartners() {
+  const parceiros = await prisma.parceiro.findMany({
+    orderBy: [{ ordem: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      nome: true,
+      href: true,
+      logo_desktop_url: true,
+      logo_mobile_url: true,
+    },
+  });
+
+  if (parceiros.length === 0) {
+    return null;
+  }
+
   return (
     <div>
       <div className="mb-8">
@@ -18,11 +33,11 @@ export function FooterPartners() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {parceiros.map((item) => (
           <PartnerCard
-            key={item.name}
-            name={item.name}
+            key={item.id}
+            name={item.nome}
             href={item.href}
-            imgMobile={item.imgMobile}
-            imgDesktop={item.imgDesktop}
+            imgMobile={item.logo_mobile_url ?? undefined}
+            imgDesktop={item.logo_desktop_url}
           />
         ))}
       </div>
